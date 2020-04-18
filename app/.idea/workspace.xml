@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="99177ceb-4bb5-4fb6-a30c-05ddde99b074" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/public/.htaccess" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/componentes/Header.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/componentes/PrivateRoute.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/componentes/PublicRoute.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/paginas/Beneficiario.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/paginas/Dashboard.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/paginas/Home.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/paginas/Login.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/paginas/Logout.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/accion_social/src/utils/Commons.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/accion_social/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/accion_social/src/logo.svg" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution>
+      <executable />
+    </execution>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/frontend/accion_social" />
+  </component>
+  <component name="ProjectId" id="1aG6S4YVKHdFqOd1Nu1zlsYvVZW" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/frontend/accion_social/src/componentes" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="ts.external.directory.path" value="C:\Program Files\JetBrains\PhpStorm 2019.3\plugins\JavaScriptLanguage\jsLanguageServicesImpl\external" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Work\AccionSocial\app\frontend\accion_social\src\paginas" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Work\AccionSocial\app\frontend\accion_social\src\componentes" />
+      <recent name="D:\Work\AccionSocial\app\frontend\accion_social\public" />
+    </key>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="viewStates">
+      <list>
+        <serviceView>
+          <treeState>
+            <expand />
+            <select />
+          </treeState>
+        </serviceView>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="99177ceb-4bb5-4fb6-a30c-05ddde99b074" name="Default Changelist" comment="" />
+      <created>1586349580230</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1586349580230</updated>
+      <workItem from="1586349584516" duration="1220000" />
+      <workItem from="1586351077217" duration="600000" />
+      <workItem from="1586353970699" duration="2132000" />
+      <workItem from="1586356970130" duration="1315000" />
+      <workItem from="1586359962547" duration="1773000" />
+      <workItem from="1586361799451" duration="1489000" />
+      <workItem from="1586370121808" duration="1240000" />
+      <workItem from="1586372157755" duration="1239000" />
+      <workItem from="1586374476150" duration="971000" />
+      <workItem from="1586439730128" duration="1776000" />
+      <workItem from="1586441540498" duration="1215000" />
+      <workItem from="1586444183519" duration="714000" />
+      <workItem from="1586630360303" duration="1778000" />
+      <workItem from="1586632387883" duration="63000" />
+      <workItem from="1586637900602" duration="599000" />
+      <workItem from="1586696406013" duration="599000" />
+      <workItem from="1586772659031" duration="1184000" />
+      <workItem from="1586774467093" duration="1801000" />
+      <workItem from="1586776581873" duration="1789000" />
+      <workItem from="1586780536343" duration="1675000" />
+      <workItem from="1586782375423" duration="1398000" />
+      <workItem from="1586784390668" duration="1776000" />
+      <workItem from="1586786212421" duration="1770000" />
+      <workItem from="1586788115140" duration="1783000" />
+      <workItem from="1586789949785" duration="1756000" />
+      <workItem from="1586791884442" duration="1774000" />
+      <workItem from="1586798337530" duration="1777000" />
+      <workItem from="1586800195867" duration="1803000" />
+      <workItem from="1586802043529" duration="1779000" />
+      <workItem from="1586803877044" duration="1776000" />
+      <workItem from="1586805686917" duration="1778000" />
+      <workItem from="1586807589886" duration="1790000" />
+      <workItem from="1586809772228" duration="1271000" />
+      <workItem from="1586858994231" duration="1776000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="724" y="322" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1586630438586">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="724" y="322" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1586630438586" />
+    <state x="656" y="343" key="com.intellij.ide.util.TipDialog" timestamp="1586859013294">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="656" y="343" key="com.intellij.ide.util.TipDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1586859013293" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1586790009778">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1586790009778" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1586807023648">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1586807023648" />
+  </component>
+</project>
