@@ -41,6 +41,16 @@ class ServiceConexion {
             data: { ...persona }
         });
     };
+
+
+    saveinstitucion = (institucion) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveInstitucion`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...institucion }
+        });
+    };
 }
 
 const conn = new ServiceConexion();

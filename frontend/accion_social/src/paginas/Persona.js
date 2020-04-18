@@ -5,29 +5,6 @@ import { Autocomplete } from "@material-ui/lab";
 import conn from '../ServiceConexion';
 
 class Persona extends React.Component {
-    /*constructor(props){
-        super(props);
-        this.state = {
-            id: 0,
-            nombre: '',
-            apellido: '',
-            ndoc: '',
-            fecha_nacimiento: '',
-            telefono: '',
-            email: '',
-            calle: '',
-            altura: '',
-            id_barrio: '',
-            barrio: '',
-            profesion: '',
-    
-            options_pers: [],
-            options_barrios: [],
-    
-            tab_selected: 0,
-            open: false
-        };
-    }*/
     state = {
         id: 0,
         nombre: '',
@@ -209,7 +186,6 @@ class Persona extends React.Component {
                                     <Grid item xs={6}>
                                         <Autocomplete
                                             autoComplete={true}
-                                            freeSolo
                                             loadingText='Cargando...'
                                             noOptionsText ="Sin datos"
                                             onChange={this.autocompleteChangeBarrio}

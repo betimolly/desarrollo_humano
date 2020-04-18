@@ -137,6 +137,44 @@ class Backend {
         }
         return json_encode($response);
     }
+
+
+    function SaveInstitucion() {
+        $id = $this->data->id;
+        $instit = $this->data->institucion;
+        $cuit = $this->data->cuit;
+        $id_resp = $this->data->id_responsable;
+        $tel = $this->data->telefono;
+        $email = $this->data->email;
+        $calle = $this->data->calle;
+        $altura = $this->data->altura;
+        $barrio = $this->data->id_barrio;
+        $activ = $this->data->actividad;
+
+        try {
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into acc_instituciones(id, institucion, cuit, id_persona, telefono, email, calle, altura, barrio, localidad, provincia, actividad) 
+                                                    values (:id, :instit, :cuit, :id_resp, :telefono, :email, :calle, :altura, :barrio, 2974, 62, :activ)");
+                $query->execute(array(':id' => $id, ':instit' => $instit, ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, ':calle' => $calle,
+                                      ':altura' => $altura, ':barrio' => $barrio, ':activ' => $activ));
+                $response = $this->conexion->lastInsertId();
+            }
+            else {
+                $valores = "id=:id, institucion=:instit, cuit=:cuit, id_persona=:id_resp, telefono=:telefono, email=:email, calle=:calle, altura=:altura, barrio=:barrio, 
+                            actividad=:activ";
+                $query = $this->conexion->prepare ("update acc_instituciones set $valores where id=:id");
+                $query->execute(array(':id' => $id, ':instit' => $instit,  ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, 
+                                      ':calle' => $calle, ':altura'=> $altura, ':barrio' => $barrio, ':activ' => $activ));
+                $response = $id;                    
+            }
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+    
 }
 
 $backend = new Backend();
