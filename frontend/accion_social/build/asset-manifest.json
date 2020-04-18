@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/accion_social/static/css/main.d185ba59.chunk.css",
+    "main.js": "/accion_social/static/js/main.0e2b59c0.chunk.js",
+    "main.js.map": "/accion_social/static/js/main.0e2b59c0.chunk.js.map",
+    "runtime-main.js": "/accion_social/static/js/runtime-main.f84bcd25.js",
+    "runtime-main.js.map": "/accion_social/static/js/runtime-main.f84bcd25.js.map",
+    "static/css/2.5b7efe6d.chunk.css": "/accion_social/static/css/2.5b7efe6d.chunk.css",
+    "static/js/2.c27a89ee.chunk.js": "/accion_social/static/js/2.c27a89ee.chunk.js",
+    "static/js/2.c27a89ee.chunk.js.map": "/accion_social/static/js/2.c27a89ee.chunk.js.map",
+    "index.html": "/accion_social/index.html",
+    "precache-manifest.62b4f16fe78dff29b94a260fbbaf6411.js": "/accion_social/precache-manifest.62b4f16fe78dff29b94a260fbbaf6411.js",
+    "service-worker.js": "/accion_social/service-worker.js",
+    "static/css/2.5b7efe6d.chunk.css.map": "/accion_social/static/css/2.5b7efe6d.chunk.css.map",
+    "static/css/main.d185ba59.chunk.css.map": "/accion_social/static/css/main.d185ba59.chunk.css.map",
+    "static/js/2.c27a89ee.chunk.js.LICENSE.txt": "/accion_social/static/js/2.c27a89ee.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.f84bcd25.js",
+    "static/css/2.5b7efe6d.chunk.css",
+    "static/js/2.c27a89ee.chunk.js",
+    "static/css/main.d185ba59.chunk.css",
+    "static/js/main.0e2b59c0.chunk.js"
+  ]
+}
