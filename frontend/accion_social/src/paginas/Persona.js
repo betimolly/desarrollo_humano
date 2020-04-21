@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, TextField, MenuItem, Grid, Tabs, Tab , AppBar, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Tabs, Tab , AppBar, Card, CardContent } from '@material-ui/core';
 import TabPanel from '../componentes/TabPanel';
-import { Autocomplete } from "@material-ui/lab";
+import PersonaDatos from "../componentes/PersonaDatos";
 import conn from '../ServiceConexion';
 
 class Persona extends React.Component {
@@ -22,7 +22,7 @@ class Persona extends React.Component {
         options_pers: [],
         options_barrios: [],
         dialog_title: '',
-        dialog_context: '',
+        dialog_content: '',
 
         tab_selected: 0,
         open: false
@@ -113,7 +113,7 @@ class Persona extends React.Component {
       
         return (
             <div className="App" >
-                <Dialog
+                {/*<Dialog
                     open={this.state.open}
                     onClose={this.handleClose}
                     aria-labelledby="alert-dialog-title"
@@ -129,7 +129,7 @@ class Persona extends React.Component {
                         Aceptar
                     </Button>
                     </DialogActions>
-                </Dialog>
+                </Dialog>*/}
                 <Card className="Card" >
                     <CardContent>
                         <AppBar position="static" color="transparent">
@@ -144,7 +144,8 @@ class Persona extends React.Component {
                             </Tabs>
                         </AppBar>
                         <TabPanel value={this.state.tab_selected} index={0} >
-                            <Grid container spacing={3} >
+                            <PersonaDatos titulo="Persona" />
+                            {/*<Grid container spacing={3} >
                                 <Grid item container justify="flex-start" xs={12}>
                                     <h2>Agregar Persona</h2>
                                 </Grid>
@@ -207,7 +208,7 @@ class Persona extends React.Component {
                                         <Button variant="contained" color="primary" onClick={this.handleFormSubmit} >Guardar</Button>
                                     </Grid>
                                 </Grid>                    
-                            </Grid>
+                            </Grid>*/}
                         </TabPanel>
                         <TabPanel value={this.state.tab_selected} index={1} >
                             ALGO

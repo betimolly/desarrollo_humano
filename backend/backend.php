@@ -18,7 +18,7 @@ class Backend {
             PDO::ATTR_EMULATE_PREPARES => false
         );
         try {
-            //$this->conexion = new PDO( "mysql:dbname=db_muni_cipo;host=192.168.1.177;charset=utf8", "desar", "4h3#gh3Lmj3", $options );
+            //$this->conexion = new PDO( "mysql:dbname=db_muni_cipo;host=192.168.0.123;charset=utf8", "desarrollo", "m4nz4n4c1p0", $options );
             $this->conexion = new PDO( "mysql:dbname=db_muni_cipo;host=localhost;charset=utf8", "root", "admin", $options );
 
         }catch(PDOException $e){
@@ -121,7 +121,7 @@ class Backend {
                                                     values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, :profesion)");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
                                     ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
-                $response = $this->conexion->lastInsertId();
+                $response = array("id" => $this->conexion->lastInsertId());
             }
             else {
                 $valores = "ndoc=:ndoc, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
@@ -129,7 +129,7 @@ class Backend {
                 $query = $this->conexion->prepare ("update personas set $valores where id=:id");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura'=> $altura, 
                                     ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
-                $response = $id;                    
+                $response =  array("id" => $id);                    
             }
         }
         catch(Exception $e) {
@@ -157,7 +157,7 @@ class Backend {
                                                     values (:id, :instit, :cuit, :id_resp, :telefono, :email, :calle, :altura, :barrio, 2974, 62, :activ)");
                 $query->execute(array(':id' => $id, ':instit' => $instit, ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, ':calle' => $calle,
                                       ':altura' => $altura, ':barrio' => $barrio, ':activ' => $activ));
-                $response = $this->conexion->lastInsertId();
+                $response = array("id" => $this->conexion->lastInsertId());
             }
             else {
                 $valores = "id=:id, institucion=:instit, cuit=:cuit, id_persona=:id_resp, telefono=:telefono, email=:email, calle=:calle, altura=:altura, barrio=:barrio, 
@@ -165,15 +165,61 @@ class Backend {
                 $query = $this->conexion->prepare ("update acc_instituciones set $valores where id=:id");
                 $query->execute(array(':id' => $id, ':instit' => $instit,  ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, 
                                       ':calle' => $calle, ':altura'=> $altura, ':barrio' => $barrio, ':activ' => $activ));
-                $response = $id;                    
+                $response = array("id" => $id);                   
             }
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+        }
+
+        return json_encode($response);
+    }
+
+
+    function SaveFamiliar() { 
+        $id_titular = $this->data->id_titular;
+        $parent = $this->data->parentesco;
+
+        try {
+            //Guardo a la nueva persona
+            $idreturn = json_decode($this->SavePersona());
+
+            if (isset($idreturn->id)) {
+                $id = $idreturn->id;
+                //Chequeo si ya existe el parentesco en la BD
+                $query = $this->conexion->prepare ("SELECT id FROM acc_familiares WHERE id_persona=:id_persona AND id_familiar=:id_familiar");
+                $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id));
+                $rta = $query->fetchAll();
+
+                if ( count($rta) > 0) {
+                    $id_parentesco = $rta[0]["id"];
+                }
+                else {
+                    $id_parentesco = 0;
+                }
+
+                //Actualizo o inserto el parentesco
+                if ($id_parentesco == 0) {
+                    $query = $this->conexion->prepare ("insert into acc_familiares(id, id_persona, id_familiar, parentesco) 
+                                                        values (NULL, :id_persona, :id_familiar, :parentesco)");
+                    $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id, ':parentesco' => $parent));
+                    $response = array("id" => $this->conexion->lastInsertId()); 
+                }        
+                else {
+                    $query = $this->conexion->prepare ("update acc_familiares set parentesco=:parentesco 
+                                                        where id_persona=:id_persona and id_familiar=:id_familiar");
+                    $result = $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id, ':parentesco' => $parent));
+                    $response = array("id" => $id_parentesco);  
+                }   
+            }
+
         }
         catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos.".$e];
         }
         return json_encode($response);
     }
-
+    
     
 }
 

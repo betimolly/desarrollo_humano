@@ -66,3 +66,12 @@
 22. Debo definir ese método en el backend, con el mismo nombre:
 	function SavePersona() { }
 
+
+## Ambiente de desarrollo
+
+1. En el RootDocument de Apache (en Windows htdocs) crear un enlace simbólico hasta la carpeta /public del proyecto React. Se denominó "accion_social_api".
+2. En la carpeta /public de proyecto React, crear un enlace simbólico a la carpeta Backend.  Se denominó "backend".
+3. Editar/crear .env.development.local para que apunte a la api correspondiente en Apache::
+   REACT_APP_API_URL = http://localhost/accion_social_api/backend
+4. Editar/crear el .env.production.local con el siguiente dato:  REACT_APP_API_URL = /accion_social/backend
+

@@ -13,6 +13,7 @@ import Profile from './componentes/Profile';
 import Persona from './paginas/Persona';
 import Institucion from './paginas/Institucion';
 import Beneficiario from './paginas/Beneficiario';
+import Familiar from './paginas/Familiar';
 
 
 class App extends React.Component{
@@ -71,6 +72,7 @@ class App extends React.Component{
                                     <PrivateRoute exact path="/accion_social/personas" component={Persona} />
                                     <PrivateRoute exact path="/accion_social/instituciones" component={Institucion} />
                                     <PrivateRoute exact path="/accion_social/agregar_beneficiario" component={Beneficiario} />
+                                    <PrivateRoute exact path="/accion_social/agregar_familiar" component={Familiar} />
                                 </Switch>
                             </div>
                         </div>

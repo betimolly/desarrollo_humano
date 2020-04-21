@@ -1,13 +1,17 @@
 import React from "react";
-import { Button, TextField, Grid, MenuItem, Radio, RadioGroup, FormControl, FormLabel, FormControlLabel, Card, CardContent  } from '@material-ui/core';
+import { Button, TextField, Grid, MenuItem, Switch, Card, CardContent, FormControl, FormGroup, FormLabel } from '@material-ui/core';
 
 class Beneficiario extends React.Component {
     
     state = {
-        persona_institucion: '',
+        es_persona_institucion: '',
         nombre: '',
         es_beneficiario: '',
-        tipo_beneficiario: '',
+        tipo_beneficio: '',
+        tipo_modulo: '',
+        entregado: true,
+        observaciones: '',
+        valor_txt_entregado: 'Si', 
         tipos_de_beneficiarios: []
     };
 
@@ -29,10 +33,6 @@ class Beneficiario extends React.Component {
         }
 
         this.setState({es_beneficiario: es_beneficiario, tipos_de_beneficiarios: tipos_de_beneficiarios});
-    };
-
-    handleChangeTipoBeneficiario = (e) => {
-        this.setState({tipo_beneficiario: e.target.value})
     };
 
     handleChange = (e) => {
@@ -58,42 +58,36 @@ class Beneficiario extends React.Component {
                             </Grid>
                             <Grid container spacing={3} item xs={12}>
                                 {/*<form onSubmit={this.handleSubmit}>*/}
-                                <Grid item container justify="flex-start" xs={6}>
-                                    <FormControl component="fieldset">
-                                        <FormLabel component="legend">Es Persona o Institución</FormLabel>
-                                        <RadioGroup row aria-label="position" name="persona_institucion" value={this.state.persona_institucion} onChange={this.handleChange} defaultValue="top">
-                                            <FormControlLabel
-                                                value="persona"
-                                                control={<Radio color="primary" />}
-                                                label="Persona"
-                                                labelPlacement="start"
-                                            />
-                                            <FormControlLabel
-                                                value="institucion"
-                                                control={<Radio color="primary" />}
-                                                label="Institución"
-                                                labelPlacement="start"
-                                            />
-                                        </RadioGroup>
-                                    </FormControl>    
+                                <Grid item xs={6}>
+                                    <TextField select fullWidth
+                                        label="Seleccione si es Persona o Institución"
+                                        id="ddlTipoPersonaInstitucion"
+                                        className="labelleft"
+                                        value={this.state.es_persona_institucion}
+                                        onChange={e => { this.setState({es_persona_institucion: e.target.value})}}
+                                        >
+                                        <MenuItem value={"persona"}>Persona</MenuItem>
+                                        <MenuItem value={"institucion"}>Institución</MenuItem>
+                                    </TextField>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
-                                        label="Seleccione"
+                                        label="Seleccione Nombre o Razón Social"
                                         id="ddlPersonaInstitucion"
                                         value={this.state.nombre}
-                                        onChange={this.handleChangeNombre}
+                                        onChange={e => { this.setState({nombre: e.target.value})}}
                                         >
                                     </TextField>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
-                                        label="¿Es Beneficiario?"
+                                        label="¿Ha recibido algún tipo de beneficio?"
                                         id="ddlBeneficiario"
+                                        className="labelleft"
                                         value={this.state.es_beneficiario}
                                         onChange={this.handleChangeBeneficiario}
                                         >
-                                        <MenuItem value={"NO"}>No corresponde</MenuItem>
+                                        <MenuItem value={"NO"}>No</MenuItem>
                                         <MenuItem value={"MUNI"}>Municipal</MenuItem>
                                         <MenuItem value={"PROV"}>Provincial</MenuItem>
                                         <MenuItem value={"NAC"}>Nacional</MenuItem>
@@ -101,16 +95,58 @@ class Beneficiario extends React.Component {
                                 </Grid>
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
-                                        label="Tipo Beneficio"
+                                        label="Nombre del Beneficio"
                                         id="ddlTipoBeneficiario"
-                                        value={this.state.tipo_beneficiario}
-                                        onChange={this.handleChangeTipoBeneficiario}
+                                        className="labelleft"
+                                        value={this.state.tipo_beneficio}
+                                        onChange={e => { this.setState({tipo_beneficio: e.target.value})}}
                                         >
                                         {
                                             this.state.tipos_de_beneficiarios.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
                                         }
                                     </TextField>                            
-                                </Grid>   
+                                </Grid> 
+                                <Grid item xs={6}>
+                                    <TextField select fullWidth
+                                        label="Módulo Otorgado"
+                                        id="ddlModulo"
+                                        className="labelleft"
+                                        value={this.state.modulo}
+                                        onChange={e => { this.setState({modulo: e.target.value})}}
+                                        >
+                                        <MenuItem value={"Limpieza"}>Limpieza</MenuItem>
+                                        <MenuItem value={"Comida"}>Comida</MenuItem>
+                                        <MenuItem value={"Monetario"}>Monetario</MenuItem>
+                                    </TextField>
+                                </Grid>
+                                <Grid item container justify="flex-start" xs={6}>
+                                    <FormControl component="fieldset">
+                                        <FormLabel component="legend">¿Fue Entregado?</FormLabel>
+                                        <FormGroup>
+                                            <Grid component="label" container alignItems="center" spacing={1}>
+                                                <Grid item>No</Grid>
+                                                <Grid item>
+                                                        <Switch
+                                                            checked={this.state.entregado}
+                                                            onChange={e => { this.setState({entregado: e.target.checked})}}
+                                                            name="entregado" 
+                                                            inputProps={{ 'aria-label': 'secondary checkbox' }}
+                                                        />
+                                                </Grid>
+                                                <Grid item>Si</Grid>
+                                            </Grid>
+                                        </FormGroup> 
+                                    </FormControl>        
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        id="txtObservaciones"
+                                        label="Observaciones"
+                                        multiline fullWidth
+                                        rows={4}
+                                        value={this.state.observaciones}
+                                    />                            
+                                </Grid>  
                                 <Grid item container justify="flex-start" xs={12}>
                                     <Button variant="contained" color="primary" onClick={e => this.handleFormSubmit(e)} >Guardar</Button>
                                 </Grid>

@@ -1,6 +1,7 @@
 import React from "react";
-import { Button, TextField, MenuItem, Grid, Tabs, Tab , AppBar, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Button, TextField, MenuItem, Grid, Card, CardContent } from '@material-ui/core';
 import { Autocomplete } from "@material-ui/lab";
+import ModalConfirmacion from "../componentes/ModalConfirmacion";
 import conn from '../ServiceConexion';
 
 class Institucion extends React.Component {
@@ -22,7 +23,7 @@ class Institucion extends React.Component {
         options_pers: [],
 
         dialog_title: '',
-        dialog_context: '',
+        dialog_content: '',
         open: false
     };
 
@@ -104,7 +105,8 @@ class Institucion extends React.Component {
 
         return (
             <div className="App">
-                <Dialog
+                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
+                {/*<Dialog
                     open={this.state.open}
                     onClose={this.handleClose}
                     aria-labelledby="alert-dialog-title"
@@ -120,7 +122,7 @@ class Institucion extends React.Component {
                         Aceptar
                     </Button>
                     </DialogActions>
-                </Dialog>
+                </Dialog>*/}
                 <Card className="Card" >
                     <CardContent>
                         <Grid container spacing={3} >

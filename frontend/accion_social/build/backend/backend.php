@@ -112,33 +112,106 @@ class Backend {
         $email = $this->data->email;
         $calle = $this->data->calle;
         $altura = $this->data->altura;
-        $barrio = $this->data->barrio;
+        $barrio = $this->data->id_barrio;
         $prof = $this->data->profesion;
 
-        if ($id == 0) {
-            $campos = "id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion";
-            $valores = "NULL, 'DNI', $ndoc, '$ape', '$nom', '$fec_nac', '$calle', $altura, $barrio, 2974, 62, $tel, $email, '$prof' ";
-            $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion) 
-                                                values (:id, :tdoc, :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, :localidad, :provincia, :telefono, :email, :profesion)");
-            $query->execute(array(':id' => $id, ':tdoc' => 'DNI', ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
-                                  ':barrio' => $barrio, ':localidad' => 2974, ':provincia' => 62, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
+        try {
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion) 
+                                                    values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, :profesion)");
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
+                $response = $this->conexion->lastInsertId();
+            }
+            else {
+                $valores = "ndoc=:ndoc, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
+                            telefono=:telefono, email=:email, profesion=:profesion";
+                $query = $this->conexion->prepare ("update personas set $valores where id=:id");
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura'=> $altura, 
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
+                $response = $id;                    
+            }
         }
-        else {
-            /*$campos = "id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion";
-            $valores = "id=$id, tdoc='DNI', ndoc=$ndoc, apellido='$ape', nombre='$nom', '$fec_nac', '$calle', $altura, $barrio, 2974, 62, $tel, $email, '$prof' ";
-            $query = $this->conexion->prepare ("update personas set :v where id=$id");
-            $query->execute(array(':v' => $valores));*/
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
         }
-        $rta = $query->fetchAll();
+        return json_encode($response);
+    }
 
-        if ( count($rta) > 0) {
-            $response = [ "id" => $rta[0]["id"]];
+
+    function SaveInstitucion() {
+        $id = $this->data->id;
+        $instit = $this->data->institucion;
+        $cuit = $this->data->cuit;
+        $id_resp = $this->data->id_responsable;
+        $tel = $this->data->telefono;
+        $email = $this->data->email;
+        $calle = $this->data->calle;
+        $altura = $this->data->altura;
+        $barrio = $this->data->id_barrio;
+        $activ = $this->data->actividad;
+
+        try {
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into acc_instituciones(id, institucion, cuit, id_persona, telefono, email, calle, altura, barrio, localidad, provincia, actividad) 
+                                                    values (:id, :instit, :cuit, :id_resp, :telefono, :email, :calle, :altura, :barrio, 2974, 62, :activ)");
+                $query->execute(array(':id' => $id, ':instit' => $instit, ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, ':calle' => $calle,
+                                      ':altura' => $altura, ':barrio' => $barrio, ':activ' => $activ));
+                $response = $this->conexion->lastInsertId();
+            }
+            else {
+                $valores = "id=:id, institucion=:instit, cuit=:cuit, id_persona=:id_resp, telefono=:telefono, email=:email, calle=:calle, altura=:altura, barrio=:barrio, 
+                            actividad=:activ";
+                $query = $this->conexion->prepare ("update acc_instituciones set $valores where id=:id");
+                $query->execute(array(':id' => $id, ':instit' => $instit,  ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, 
+                                      ':calle' => $calle, ':altura'=> $altura, ':barrio' => $barrio, ':activ' => $activ));
+                $response = $id;                    
+            }
         }
-        else {
+        catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos."];
         }
         return json_encode($response);
     }
+
+
+    function SaveFamiliar() {
+        $id = $this->data->id;
+        $ndoc = $this->data->ndoc;
+        $nom = $this->data->nombre;
+        $ape = $this->data->apellido;
+        $fec_nac = $this->data->fecha_nacimiento;
+        $tel = $this->data->telefono;
+        $email = $this->data->email;
+        $calle = $this->data->calle;
+        $altura = $this->data->altura;
+        $barrio = $this->data->id_barrio;
+        $prof = $this->data->profesion;
+
+        try {
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion) 
+                                                    values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, :profesion)");
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
+                $response = $this->conexion->lastInsertId();
+            }
+            else {
+                $valores = "ndoc=:ndoc, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
+                            telefono=:telefono, email=:email, profesion=:profesion";
+                $query = $this->conexion->prepare ("update personas set $valores where id=:id");
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura'=> $altura, 
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
+                $response = $id;                    
+            }
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+    
+    
 }
 
 $backend = new Backend();

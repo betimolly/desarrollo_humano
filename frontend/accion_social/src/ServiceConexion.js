@@ -51,6 +51,16 @@ class ServiceConexion {
             data: { ...institucion }
         });
     };
+
+    
+    savefamiliar = (familiar) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveFamiliar`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...familiar }
+        });
+    };
 }
 
 const conn = new ServiceConexion();
