@@ -1,55 +1,123 @@
 import React from "react";
-import { Button, TextField, Grid, MenuItem, Switch, Card, CardContent, FormControl, FormGroup, FormLabel } from '@material-ui/core';
+import { Button, TextField, Grid, MenuItem, Card, CardContent } from '@material-ui/core';
+import { Autocomplete } from "@material-ui/lab";
+import ModalConfirmacion from "../componentes/ModalConfirmacion";
+import conn from '../ServiceConexion';
 
 class Beneficiario extends React.Component {
     
     state = {
+        id: 0,
         es_persona_institucion: '',
+        id_pers_inst: '',
         nombre: '',
-        es_beneficiario: '',
-        tipo_beneficio: '',
+        es_beneficiario_1: '',
+        es_beneficiario_2: '',
+        es_beneficiario_3: '',
+        tipo_beneficio_1: '',
+        tipo_beneficio_2: '',
+        tipo_beneficio_3: '',
         tipo_modulo: '',
         entregado: true,
+        fecha_alta: '',
         observaciones: '',
-        valor_txt_entregado: 'Si', 
-        tipos_de_beneficiarios: []
+
+        tipos_de_beneficiarios_1: [],
+        tipos_de_beneficiarios_2: [],
+        tipos_de_beneficiarios_3: [],
+        lista_personas_instituciones: [],
+        
+        dialog_title: '',
+        dialog_content: '',
+        open: false
     };
+
+    handleClickOpen = () => {
+        this.setState( { open: true} );
+    };
+    
+    handleClose = () => {
+        this.setState( { open: false} );
+    };
+
+    handleChangeTipo = (e) => {
+        this.setState({es_persona_institucion: e.target.value, lista_personas_instituciones: []});
+    };
+
+    searchPersonaInstitucion = (e) => {
+        if (e.target.value.length >= 4) {
+            conn.searchpersonainstitucion(this.state.es_persona_institucion, e.target.value).then( response => {
+                if (!response.data.error) {
+                    this.setState({ lista_personas_instituciones : response.data});
+                }
+             })
+            .catch( error => { console.error(error) } );
+        }
+    } 
+
+    autocompleteChangePersonaInstitucion = (e, newValue) => {
+        this.setState({id_pers_inst: newValue.numero, nombre: newValue.descripcion})
+    }
+    
 
     handleChangeBeneficiario = (e) => {
         const es_beneficiario = e.target.value;
+        const key = e.target.name;
+        const keyParts = key.split('_');
+        const index = keyParts[keyParts.length - 1];
+        const keyTipos = 'tipos_de_beneficiarios_'+index;
+
         let tipos_de_beneficiarios;
 
         switch (es_beneficiario) {
-            case "NO": tipos_de_beneficiarios = [{clave: "NO", valor: "No Corresponde"}];
+            case "NO": tipos_de_beneficiarios = [{clave: "No Corresponde", valor: "No Corresponde"}];
                 break;
-            case "MUNI": tipos_de_beneficiarios = [ {clave: "BECA", valor: "Beca Estudiantil"}, {clave: "SUBS", valor: "Subsidio"}, {clave: "OTR", valor: "Otro"}];
+            case "MUNI": tipos_de_beneficiarios = [ {clave: "Beca Estudiantil", valor: "Beca Estudiantil"}, {clave: "Subsidio", valor: "Subsidio"}, {clave: "Otro", valor: "Otro"}];
                 break;
-            case "PROV": tipos_de_beneficiarios = [ {clave: "SUBS", valor: "Subsidio"}, {clave: "TARJ", valor: "Tarjeta Río Negro Presente"}, {clave: "SIP", valor: "Siprove"}, {clave: "OTR", valor: "Otro"}];
+            case "PROV": tipos_de_beneficiarios = [ {clave: "Subsidio", valor: "Subsidio"}, {clave: "Tarjeta Río Negro Presente", valor: "Tarjeta Río Negro Presente"}, {clave: "Siprove", valor: "Siprove"}, {clave: "Otro", valor: "Otro"}];
                 break;
-            case "NAC": tipos_de_beneficiarios = [ {clave: "AUH", valor: "Asignación Universal por Hijo"}, {clave: "DISC", valor: "Discapacidad"}, {clave: "ALIM", valor: "Alimentar"}, {clave: "PRO", valor: "Progresar"}, {clave: "PEN", valor: "Pensión"}];
+            case "NAC": tipos_de_beneficiarios = [ {clave: "Asignación Universal por Hijo", valor: "Asignación Universal por Hijo"}, {clave: "Discapacidad", valor: "Discapacidad"}, {clave: "Alimentar", valor: "Alimentar"}, {clave: "Progresar", valor: "Progresar"}, {clave: "Pensión", valor: "Pensión"}];
                 break;
             default: ;
                 break;
         }
 
-        this.setState({es_beneficiario: es_beneficiario, tipos_de_beneficiarios: tipos_de_beneficiarios});
-    };
-
-    handleChange = (e) => {
-        this.setState({persona_institucion: e.target.value});
-    };
-
-    handleChangeNombre = (e) => {
-        this.setState({nombre: e.target.value});
+        this.setState({[key]: es_beneficiario, [keyTipos]: tipos_de_beneficiarios});
     };
 
     handleFormSubmit = () => {
-        
+        conn.savebeneficiario(this.state).then( response => {
+            if (response.data.error) {
+                this.setState({error : response.data.error});
+                this.setState({dialog_title : "Error"});
+                this.setState({dialog_content : "Error al guardar o actualizar los datos."});
+                this.handleClickOpen();
+            }
+            else {
+                this.setState({dialog_title : "Confirmación"});
+                this.setState({dialog_content : "Los datos se han guardado o actualizado correctamente."});
+                this.handleClickOpen();
+                this.setState({ id: 0,
+                                es_persona_institucion: '',
+                                id_pers_inst: '',
+                                nombre: '',
+                                es_beneficiario_1: '',
+                                es_beneficiario_2: '',
+                                es_beneficiario_3: '',
+                                tipo_beneficio_1: '',
+                                tipo_beneficio_2: '',
+                                tipo_beneficio_3: '',
+                                fecha_alta: '',
+                                observaciones: ''});
+            }
+         })
+        .catch( error => { console.error(error) } );       
     };
     
     render() {
         return (
             <div className="App">
+                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
                 <Card className="Card" >
                     <CardContent>
                         <Grid container spacing={3} >
@@ -64,27 +132,31 @@ class Beneficiario extends React.Component {
                                         id="ddlTipoPersonaInstitucion"
                                         className="labelleft"
                                         value={this.state.es_persona_institucion}
-                                        onChange={e => { this.setState({es_persona_institucion: e.target.value})}}
+                                        onChange={this.handleChangeTipo}
                                         >
                                         <MenuItem value={"persona"}>Persona</MenuItem>
                                         <MenuItem value={"institucion"}>Institución</MenuItem>
                                     </TextField>
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <TextField select fullWidth
-                                        label="Seleccione Nombre o Razón Social"
-                                        id="ddlPersonaInstitucion"
-                                        value={this.state.nombre}
-                                        onChange={e => { this.setState({nombre: e.target.value})}}
-                                        >
-                                    </TextField>
+                                    <Autocomplete
+                                        autoComplete={true}
+                                        loadingText='Cargando...'
+                                        noOptionsText ="Sin datos"
+                                        onChange={this.autocompleteChangePersonaInstitucion}
+                                        getOptionLabel={option => option.numero ? option.descripcion : '' }
+                                        renderInput={params => (
+                                            <TextField {...params} id="txtNumero" name="id_pers_inst" label="Seleccione DNI o CUIT" fullWidth value={this.state.id_pers_inst}  onChange={this.searchPersonaInstitucion}  />)}
+                                                options={this.state.lista_personas_instituciones} />
+                                        <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
                                         label="¿Ha recibido algún tipo de beneficio?"
-                                        id="ddlBeneficiario"
+                                        id="ddlBeneficiario_1"
                                         className="labelleft"
-                                        value={this.state.es_beneficiario}
+                                        name="es_beneficiario_1"
+                                        value={this.state.es_beneficiario_1}
                                         onChange={this.handleChangeBeneficiario}
                                         >
                                         <MenuItem value={"NO"}>No</MenuItem>
@@ -96,48 +168,68 @@ class Beneficiario extends React.Component {
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
                                         label="Nombre del Beneficio"
-                                        id="ddlTipoBeneficiario"
+                                        id="ddlTipoBeneficiario_1"
                                         className="labelleft"
-                                        value={this.state.tipo_beneficio}
-                                        onChange={e => { this.setState({tipo_beneficio: e.target.value})}}
+                                        value={this.state.tipo_beneficio_1}
+                                        onChange={e => { this.setState({tipo_beneficio_1: e.target.value})}}
                                         >
                                         {
-                                            this.state.tipos_de_beneficiarios.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
+                                            this.state.tipos_de_beneficiarios_1.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
                                         }
                                     </TextField>                            
                                 </Grid> 
                                 <Grid item xs={6}>
                                     <TextField select fullWidth
-                                        label="Módulo Otorgado"
-                                        id="ddlModulo"
+                                        id="ddlBeneficiario_2"
                                         className="labelleft"
-                                        value={this.state.modulo}
-                                        onChange={e => { this.setState({modulo: e.target.value})}}
+                                        name="es_beneficiario_2"
+                                        value={this.state.es_beneficiario_2}
+                                        onChange={this.handleChangeBeneficiario}
                                         >
-                                        <MenuItem value={"Limpieza"}>Limpieza</MenuItem>
-                                        <MenuItem value={"Comida"}>Comida</MenuItem>
-                                        <MenuItem value={"Monetario"}>Monetario</MenuItem>
+                                        <MenuItem value={"NO"}>No</MenuItem>
+                                        <MenuItem value={"MUNI"}>Municipal</MenuItem>
+                                        <MenuItem value={"PROV"}>Provincial</MenuItem>
+                                        <MenuItem value={"NAC"}>Nacional</MenuItem>
                                     </TextField>
                                 </Grid>
-                                <Grid item container justify="flex-start" xs={6}>
-                                    <FormControl component="fieldset">
-                                        <FormLabel component="legend">¿Fue Entregado?</FormLabel>
-                                        <FormGroup>
-                                            <Grid component="label" container alignItems="center" spacing={1}>
-                                                <Grid item>No</Grid>
-                                                <Grid item>
-                                                        <Switch
-                                                            checked={this.state.entregado}
-                                                            onChange={e => { this.setState({entregado: e.target.checked})}}
-                                                            name="entregado" 
-                                                            inputProps={{ 'aria-label': 'secondary checkbox' }}
-                                                        />
-                                                </Grid>
-                                                <Grid item>Si</Grid>
-                                            </Grid>
-                                        </FormGroup> 
-                                    </FormControl>        
+                                <Grid item xs={6}>
+                                    <TextField select fullWidth
+                                        id="ddlTipoBeneficiario_2"
+                                        className="labelleft"
+                                        value={this.state.tipo_beneficio_2}
+                                        onChange={e => { this.setState({tipo_beneficio_2: e.target.value})}}
+                                        >
+                                        {
+                                            this.state.tipos_de_beneficiarios_2.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
+                                        }
+                                    </TextField>                            
+                                </Grid> 
+                                <Grid item xs={6}>
+                                    <TextField select fullWidth
+                                        id="ddlBeneficiario_3"
+                                        className="labelleft"
+                                        name="es_beneficiario_3"
+                                        value={this.state.es_beneficiario_3}
+                                        onChange={this.handleChangeBeneficiario}
+                                        >
+                                        <MenuItem value={"NO"}>No</MenuItem>
+                                        <MenuItem value={"MUNI"}>Municipal</MenuItem>
+                                        <MenuItem value={"PROV"}>Provincial</MenuItem>
+                                        <MenuItem value={"NAC"}>Nacional</MenuItem>
+                                    </TextField>
                                 </Grid>
+                                <Grid item xs={6}>
+                                    <TextField select fullWidth
+                                        id="ddlTipoBeneficiario_3"
+                                        className="labelleft"
+                                        value={this.state.tipo_beneficio_3}
+                                        onChange={e => { this.setState({tipo_beneficio_3: e.target.value})}}
+                                        >
+                                        {
+                                            this.state.tipos_de_beneficiarios_3.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
+                                        }
+                                    </TextField>                            
+                                </Grid> 
                                 <Grid item xs={12}>
                                     <TextField
                                         id="txtObservaciones"
@@ -145,6 +237,7 @@ class Beneficiario extends React.Component {
                                         multiline fullWidth
                                         rows={4}
                                         value={this.state.observaciones}
+                                        onChange={e => { this.setState({observaciones: e.target.value})}}
                                     />                            
                                 </Grid>  
                                 <Grid item container justify="flex-start" xs={12}>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, TextField, MenuItem, Grid, Card, CardContent } from '@material-ui/core';
+import { Button, TextField, MenuItem, Grid } from '@material-ui/core';
 import { Autocomplete } from "@material-ui/lab";
 import ModalConfirmacion from "./ModalConfirmacion";
 import conn from '../ServiceConexion';
@@ -58,6 +58,9 @@ class PersonaDatos extends React.Component {
                                 altura: '',
                                 barrio: '',
                                 profesion: ''});
+                if (this.props.afterSavePersona) {
+                    this.props.afterSavePersona(response.data.id);
+                }               
             }
          })
         .catch( error => { console.error(error) } );
@@ -80,7 +83,10 @@ class PersonaDatos extends React.Component {
     } 
 
     autocompleteChangePersona = (e, newValue) => {
-        this.setState({...newValue})
+        this.setState({...newValue});
+        if ((newValue !== null) && this.props.onChangePersona) {
+            this.props.onChangePersona(newValue.id);
+        }
     }
 
     searchBarrio = (e) => {
@@ -167,6 +173,7 @@ class PersonaDatos extends React.Component {
                                 <MenuItem value="Jubilado">Jubilado</MenuItem>
                                 <MenuItem value="Pensionado">Pensionado</MenuItem>
                                 <MenuItem value="Desocupado">Desocupado</MenuItem>
+                                <MenuItem value="Otro">Otro</MenuItem>
                             </TextField>
                         </Grid>
                         <Grid item container justify="flex-start" xs={12}>

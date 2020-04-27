@@ -106,23 +106,7 @@ class Institucion extends React.Component {
         return (
             <div className="App">
                 <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
-                {/*<Dialog
-                    open={this.state.open}
-                    onClose={this.handleClose}
-                    aria-labelledby="alert-dialog-title"
-                    aria-describedby="alert-dialog-description"
-                >
-                    <DialogTitle id="alert-dialog-title">{this.state.dialog_title}</DialogTitle>
-                    <DialogContent>
-                    <DialogContentText id="alert-dialog-description">{this.state.dialog_content}
-                    </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                    <Button onClick={this.handleClose} color="primary" autoFocus>
-                        Aceptar
-                    </Button>
-                    </DialogActions>
-                </Dialog>*/}
+
                 <Card className="Card" >
                     <CardContent>
                         <Grid container spacing={3} >
@@ -130,7 +114,6 @@ class Institucion extends React.Component {
                                 <h2>Agregar Institución</h2>
                             </Grid>
                             <Grid container spacing={3} item xs={12}>
-                                {/*<form onSubmit={this.handleSubmit}>*/}
                                 <Grid item xs={6}>
                                     <TextField id="txtInstitucion" fullWidth name="institucion" label="Nombre Institución" value={this.state.institucion} onChange={e => this.setState({ institucion: e.target.value })} ></TextField>
                                 </Grid>
@@ -183,7 +166,6 @@ class Institucion extends React.Component {
                                 <Grid item container justify="flex-start" xs={12}>
                                     <Button variant="contained" color="primary" onClick={e => this.handleFormSubmit(e)} >Guardar</Button>
                                 </Grid>
-                                {/*</form>*/}
                             </Grid>                    
                         </Grid>
                     </CardContent>

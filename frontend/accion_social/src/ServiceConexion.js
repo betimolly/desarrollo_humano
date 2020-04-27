@@ -31,6 +31,64 @@ class ServiceConexion {
             data: { nombre }
         });
     };
+    
+        
+    searchpersonainstitucion = (pers_inst, txt_search) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchPersonaInstitucion`,
+            headers: { 'content-type': 'application/json' },
+            data: { pers_inst, txt_search }
+        });
+    };
+    
+        
+    listabeneficiarios = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaBeneficiarios`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
+    listafamiliares = (id_persona) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaFamiliares`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_persona }
+        });
+    };
+    
+        
+    listapersonas = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaPersonas`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
+    deletebeneficiarios = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeleteBeneficiarios`,
+            headers: { 'content-type': 'application/json' },
+            data: { data }
+        });
+    };
+    
+        
+    deletepersonas = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeletePersonas`,
+            headers: { 'content-type': 'application/json' },
+            data: { data }
+        });
+    };
 
 
     savepersona = (persona) => {
@@ -59,6 +117,16 @@ class ServiceConexion {
             url: `${this.apiurl}/SaveFamiliar`,
             headers: { 'content-type': 'application/json' },
             data: { ...familiar }
+        });
+    };
+
+    
+    savebeneficiario = (beneficiario) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveBeneficiario`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...beneficiario }
         });
     };
 }

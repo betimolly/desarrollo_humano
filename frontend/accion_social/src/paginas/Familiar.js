@@ -7,26 +7,19 @@ import conn from '../ServiceConexion';
 class Persona extends React.Component {
     state = {
         id_titular: 0,
-
-        id: 0,
-        nombre: '',
-        apellido: '',
-        ndoc: '',
-        fecha_nacimiento: '',
-        telefono: '',
-        email: '',
-        calle: '',
-        altura: '',
-        id_barrio: '',
-        barrio: '',
-        profesion: '',
         parentesco: '',
 
         options_pers: []
     };
 
-    handleFormSubmit = () => {
-        conn.savefamiliar(this.state).then( response => {
+    handleFormSubmit = (id_familiar) => {
+        const familiar = { 
+            id_titular: this.state.id_titular,
+            parentesco: this.state.parentesco,
+            id_familiar: id_familiar
+        };
+
+        conn.savefamiliar(familiar).then( response => {
             if (response.data.error) {
                 this.setState({error : response.data.error});
                 this.setState({dialog_title : "Error"});
@@ -37,18 +30,7 @@ class Persona extends React.Component {
                 this.setState({dialog_title : "Confirmación"});
                 this.setState({dialog_content : "Los datos se han guardado o actualizado correctamente."});
                 this.handleClickOpen();
-                this.setState({ id: 0,
-                                nombre: '',
-                                apellido: '',
-                                ndoc: '',
-                                fecha_nacimiento: '',
-                                telefono: '',
-                                email: '',
-                                calle: '',
-                                altura: '',
-                                id_barrio: '',
-                                barrio: '',
-                                profesion: '',
+                this.setState({ id_titular: 0,
                                 parentesco: ''});
             }
          })
@@ -109,7 +91,7 @@ class Persona extends React.Component {
                             </Grid>
                         </Grid>
                     
-                        <PersonaDatos titulo="Familiar" />
+                        <PersonaDatos titulo="Familiar" afterSavePersona={this.handleFormSubmit} />
                     </CardContent>                    
                 </Card>
             </div>

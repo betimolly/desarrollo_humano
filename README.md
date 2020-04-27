@@ -48,7 +48,7 @@
 
 ## Crear una página y agregarla al menú
 
-18. Se debe agregar al menú, por lo que debo primero agregar el nombre con que se va a mostrar en Menu.js:
+1. Se debe agregar al menú, por lo que debo primero agregar el nombre con que se va a mostrar en Menu.js:
 	<NavItem eventKey="personas">
 		<NavIcon>
 			<FontAwesomeIcon icon={faUser} />
@@ -57,13 +57,13 @@
 			Personas
 		</NavText>
 	</NavItem>
-19. Y luego, la ruta a donde debería ir al clickear en App.js. No olvidar que el nombre del componente es el nombre del archivo js y de la clase y hay que importarlo en App.js:
+2. Y luego, la ruta a donde debería ir al clickear en App.js. No olvidar que el nombre del componente es el nombre del archivo js y de la clase y hay que importarlo en App.js:
 	<PrivateRoute exact path="/accion_social/personas" component={Persona} />
-20. Para crear una página, se crea en la carpeta /paginas. No olvidar importar la conexión:
+3. Para crear una página, se crea en la carpeta /paginas. No olvidar importar la conexión:
 	import conn from '../ServiceConexion';	
-21. En ServiceConexion, debo definir los métodos que se utilizarán en la página, por ejemplo, el guardado:
+4. En ServiceConexion, debo definir los métodos que se utilizarán en la página, por ejemplo, el guardado:
 	savepersona = (persona) => { /*ALGO*/ }
-22. Debo definir ese método en el backend, con el mismo nombre:
+5. Debo definir ese método en el backend, con el mismo nombre:
 	function SavePersona() { }
 
 
@@ -75,3 +75,8 @@
    REACT_APP_API_URL = http://localhost/accion_social_api/backend
 4. Editar/crear el .env.production.local con el siguiente dato:  REACT_APP_API_URL = /accion_social/backend
 
+
+## Agregando componente para grillas
+
+1. Instalo un componente de React que utiliza Material:
+	npm install material-table --save

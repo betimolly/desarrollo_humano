@@ -34,6 +34,21 @@ class Menu extends React.Component{
                                         <NavText>
                                             Personas
                                         </NavText>
+                                        <NavItem eventKey="lista_personas">
+                                            <NavText>
+                                                Listado de Personas
+                                            </NavText>
+                                        </NavItem>
+                                        <NavItem eventKey="agregar_persona">
+                                            <NavText>
+                                                Agregar Persona
+                                            </NavText>
+                                        </NavItem>
+                                        <NavItem eventKey="agregar_familiar">
+                                            <NavText>
+                                                Agregar Familiar
+                                            </NavText>
+                                        </NavItem>
                                     </NavItem>
                                     <NavItem eventKey="instituciones">
                                         <NavIcon>
@@ -50,14 +65,14 @@ class Menu extends React.Component{
                                         <NavText>
                                             Beneficiarios
                                         </NavText>
+                                        <NavItem eventKey="lista_beneficiarios">
+                                            <NavText>
+                                                Listado de Beneficiarios
+                                            </NavText>
+                                        </NavItem>
                                         <NavItem eventKey="agregar_beneficiario">
                                             <NavText>
                                                 Agregar Beneficiario
-                                            </NavText>
-                                        </NavItem>
-                                        <NavItem eventKey="agregar_familiar">
-                                            <NavText>
-                                                Agregar Familiar
                                             </NavText>
                                         </NavItem>
                                     </NavItem>

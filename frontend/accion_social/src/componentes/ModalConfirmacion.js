@@ -16,7 +16,7 @@ class ModalConfirmacion extends React.Component {
                 </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                <Button onClick={this.props.handleClose} color="primary" autoFocus>
+                <Button onClick={this.props.handleOk ? this.props.handleOk : this.props.handleClose} color="primary" autoFocus>
                     Aceptar
                 </Button>
                 </DialogActions>

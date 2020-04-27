@@ -14,6 +14,8 @@ import Persona from './paginas/Persona';
 import Institucion from './paginas/Institucion';
 import Beneficiario from './paginas/Beneficiario';
 import Familiar from './paginas/Familiar';
+import ListaBeneficiarios from './paginas/ListaBeneficiarios';
+import ListaPersonas from './paginas/ListaPersonas';
 
 
 class App extends React.Component{
@@ -56,7 +58,7 @@ class App extends React.Component{
                         <div className="header">
                             <PublicLinkMenu activeClassName="active" urlto="/accion_social/login" texttourl="Ingreso" loggedIn />
                             <PrivateLinkMenu activeClassName="active" exact urlto="/accion_social" texttourl="Principal" loggedIn />
-                            <a onClick={this.handleLoggedOut} style={{cursor:"pointer", display : (loggedIn) ? ("inline-block") : ("none") }} >Salir</a>
+                            <a onClick={this.handleLoggedOut} href="/accion_social" style={{cursor:"pointer", display : (loggedIn) ? ("inline-block") : ("none") }} >Salir</a>
                             <Profile loggedIn={loggedIn} />
                         </div>
                         <div style={{position: "relative", height: "calc(100vh - 50px)"}}>
@@ -69,10 +71,12 @@ class App extends React.Component{
                                     <PublicRoute path="/accion_social/login">
                                         <Login onLoggedIn={this.handleLoggedIn }/>
                                     </PublicRoute>
-                                    <PrivateRoute exact path="/accion_social/personas" component={Persona} />
+                                    <PrivateRoute exact path="/accion_social/agregar_persona" component={Persona} />
                                     <PrivateRoute exact path="/accion_social/instituciones" component={Institucion} />
                                     <PrivateRoute exact path="/accion_social/agregar_beneficiario" component={Beneficiario} />
                                     <PrivateRoute exact path="/accion_social/agregar_familiar" component={Familiar} />
+                                    <PrivateRoute exact path="/accion_social/lista_beneficiarios" component={ListaBeneficiarios} />
+                                    <PrivateRoute exact path="/accion_social/lista_personas" component={ListaPersonas} />
                                 </Switch>
                             </div>
                         </div>

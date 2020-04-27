@@ -82,3 +82,12 @@
   max-width: none !important;
 }
 
+/***************ESTILO PARA LA SUB-GRILLA DE FAMILIARES ***************/
+.gridFamiliares {
+  width: 50%;
+  margin: 0 auto;  
+}
+
+.gridFamiliares th {
+  background: #ddd;
+}
