@@ -90,6 +90,15 @@ class ListaPersonas extends React.Component {
                             onClick: (evt, data) => {
                                 this.setState({ borrar: data, open: true });
                             }
+                        },
+                        {
+                            icon: 'edit',
+                            tooltip: 'Editar Persona',
+                            onClick: (event, rowData) => {if (rowData.length === 1) {
+                                this.props.history.push(`/accion_social/agregar_persona/${rowData[0].id}`);
+                            } else {
+
+                            }}
                         }
                     ]}
                     options={{
@@ -118,7 +127,7 @@ class ListaPersonas extends React.Component {
                                   {rowData.familiares.length > 0 ? (
                                         <table className="gridFamiliares">
                                             <tr>
-                                                <th>Nombre Familiar</th>
+                                                <th>{rowData.familiares[0].titular === 'S' ? "Titular" : "Nombre Familiar"} </th>
                                                 <th>Parentesco</th>
                                             </tr>
                                         { 

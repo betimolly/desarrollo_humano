@@ -25,6 +25,9 @@ class Persona extends React.Component {
     };
 
     render() {      
+
+        const id_pers = this.props.match.params.pers || 0;
+
         return (
             <div className="App" >
                 <Card className="Card" >
@@ -41,7 +44,7 @@ class Persona extends React.Component {
                             </Tabs>
                         </AppBar>
                         <TabPanel value={this.state.tab_selected} index={0} >
-                            <PersonaDatos titulo="Persona" onChangePersona={this.handleChangePersona} />
+                            <PersonaDatos titulo="Persona" id_pers={id_pers} onChangePersona={this.handleChangePersona} />
                         </TabPanel>
                         <TabPanel value={this.state.tab_selected} index={1} >
                             <Listafamiliares titulo="Listado Familiares" data_familiares={this.state.data_familiares} />

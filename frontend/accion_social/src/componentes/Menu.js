@@ -3,7 +3,7 @@ import React from 'react';
 import SideNav, { NavItem, NavIcon, NavText } from '@trendmicro/react-sidenav';
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUser, faHandsHelping, faLandmark } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faHandsHelping, faLandmark, faBoxOpen, faPeopleCarry } from '@fortawesome/free-solid-svg-icons'
 import { Route } from 'react-router-dom';
 
 
@@ -57,6 +57,16 @@ class Menu extends React.Component{
                                         <NavText>
                                             Instituciones
                                         </NavText>
+                                        <NavItem eventKey="lista_instituciones">
+                                            <NavText>
+                                                Listado de Instituciones
+                                            </NavText>
+                                        </NavItem>
+                                        <NavItem eventKey="agregar_institucion">
+                                            <NavText>
+                                            Agregar Institución
+                                            </NavText>
+                                        </NavItem>
                                     </NavItem>
                                     <NavItem eventKey="beneficiarios">
                                         <NavIcon>
@@ -73,6 +83,42 @@ class Menu extends React.Component{
                                         <NavItem eventKey="agregar_beneficiario">
                                             <NavText>
                                                 Agregar Beneficiario
+                                            </NavText>
+                                        </NavItem>
+                                    </NavItem>
+                                    <NavItem eventKey="proveedores">
+                                        <NavIcon>
+                                            <FontAwesomeIcon icon={faPeopleCarry} />
+                                        </NavIcon>
+                                        <NavText>
+                                            Proveedores
+                                        </NavText>
+                                        <NavItem eventKey="lista_proveedores">
+                                            <NavText>
+                                                Listado de Proveedores
+                                            </NavText>
+                                        </NavItem>
+                                        <NavItem eventKey="agregar_proveedores">
+                                            <NavText>
+                                                Agregar Proveedor
+                                            </NavText>
+                                        </NavItem>
+                                    </NavItem>
+                                    <NavItem eventKey="articulos">
+                                        <NavIcon>
+                                            <FontAwesomeIcon icon={faBoxOpen} />
+                                        </NavIcon>
+                                        <NavText>
+                                            Artículos
+                                        </NavText>
+                                        <NavItem eventKey="lista_articulos">
+                                            <NavText>
+                                                Listado de Artículos
+                                            </NavText>
+                                        </NavItem>
+                                        <NavItem eventKey="agregar_articulo">
+                                            <NavText>
+                                                Agregar Artículo
                                             </NavText>
                                         </NavItem>
                                     </NavItem>

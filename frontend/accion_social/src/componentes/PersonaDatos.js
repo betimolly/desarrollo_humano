@@ -4,7 +4,9 @@ import { Autocomplete } from "@material-ui/lab";
 import ModalConfirmacion from "./ModalConfirmacion";
 import conn from '../ServiceConexion';
 
+
 class PersonaDatos extends React.Component {
+
     state = {
         id: 0,
         nombre: '',
@@ -15,7 +17,6 @@ class PersonaDatos extends React.Component {
         email: '',
         calle: '',
         altura: '',
-        id_barrio: '',
         barrio: '',
         profesion: '',
 
@@ -27,12 +28,30 @@ class PersonaDatos extends React.Component {
         open: false
     };
 
+    getNewPerson = (nrodoc='') => {
+        return {id: 0, 
+                nombre: '',
+                apellido: '',
+                ndoc: nrodoc,
+                fecha_nacimiento: '',
+                telefono: '',
+                email: '',
+                calle: '',
+                altura: '',
+                barrio: '',
+                profesion: ''};
+    }
+
     handleClickOpen = () => {
         this.setState( { open: true} );
     };
     
     handleClose = () => {
         this.setState( { open: false} );
+    };
+    
+    handleChangeBarrios = (e) => {
+        this.setState( {barrio: e.target.value} );
     };
 
     handleFormSubmit = () => {
@@ -67,12 +86,14 @@ class PersonaDatos extends React.Component {
     };
 
 
-    searchPersona = (e) => {
-        const nrodoc = e.target.value;
-        if (e.target.value.length >= 4) {
-            conn.searchpersona(e.target.value).then( response => {
+    searchPersona = (e, nrodoc) => {
+        this.setState({ndoc: nrodoc});
+
+        if (nrodoc.length >= 4) {
+            conn.searchpersona(nrodoc).then( response => {
+                //Si no existe registro que coincida con el nrodoc, dejo entonces el valor que se escribió, porque es un alta
                 if (response.data.error) {
-                    this.setState({ ndoc: nrodoc });
+                    this.setState({ options_pers: [this.getNewPerson(nrodoc)] });
                 }
                 else {
                     this.setState({ options_pers : response.data});
@@ -89,7 +110,7 @@ class PersonaDatos extends React.Component {
         }
     }
 
-    searchBarrio = (e) => {
+  /*  searchBarrio = (e) => {
         if (e.target.value.length >= 4) {
             conn.searchbarrio(e.target.value).then( response => {
                 if (response.data.error) {
@@ -105,14 +126,39 @@ class PersonaDatos extends React.Component {
 
     autocompleteChangeBarrio = (e, newValue) => {
         this.setState({id_barrio: newValue.num, barrio: newValue.barrio})
-    }
+    }*/
 
     
+    componentDidMount() {
+        
+        conn.loadbarrios().then( response => { 
+            this.setState( { options_barrios: response.data } );
+        });
+
+        //Verifico si es una edición
+        if (this.props.id_pers) {
+            conn.searchexactperson(this.props.id_pers).then( response => { 
+                if (response.data.length > 0) {
+                    const data = response.data[0];
+                    this.setState( { options_pers: response.data,
+                                     id: data.id, 
+                                     nombre: data.nombre,
+                                     apellido: data.apellido,
+                                     ndoc: data.ndoc,
+                                     fecha_nacimiento: data.fecha_nacimiento,
+                                     telefono: data.telefono,
+                                     email: data.email,
+                                     calle: data.calle,
+                                     altura: data.altura,
+                                     barrio: data.barrio,
+                                     profesion: data.profesion} );
+                }
+            });
+        }
+    }
+
 
     render() {
-        const { options_pers, options_barrios } = this.state;
-        //const loading = open && options.length === 0;
-      
         return (
             <React.Fragment >
                 <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
@@ -123,15 +169,15 @@ class PersonaDatos extends React.Component {
                     <Grid container spacing={3} item xs={12}>
                         <Grid item xs={6}>
                             <Autocomplete
-                                autoComplete={true}
-                                freeSolo
+                                inputValue={this.state.ndoc}
+                                onInputChange={this.searchPersona}
                                 loadingText='Cargando...'
                                 noOptionsText ="Sin datos"
                                 onChange={this.autocompleteChangePersona}
                                 getOptionLabel={option => option.ndoc ? option.ndoc.toString() : '' }
                                 renderInput={params => (
-                                    <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth value={this.state.ndoc}  onChange={this.searchPersona}  />)}
-                                options={options_pers} />
+                                    <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth  />)}
+                                options={this.state.options_pers} />
                                 <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
                         </Grid>
                         <Grid item xs={6}>
@@ -156,16 +202,17 @@ class PersonaDatos extends React.Component {
                             <TextField id="txtAltura" fullWidth name="altura" label="Altura" value={this.state.altura} onChange={e => this.setState({ altura: e.target.value })} ></TextField>
                         </Grid>
                         <Grid item xs={6}>
-                            <Autocomplete
-                                autoComplete={true}
-                                loadingText='Cargando...'
-                                noOptionsText ="Sin datos"
-                                onChange={this.autocompleteChangeBarrio}
-                                getOptionLabel={option => option.barrio}
-                                renderInput={params => (
-                                    <TextField {...params} id="txtBarrio" name="barrio" label="Barrio" fullWidth value={this.state.barrio} onChange={this.searchBarrio}  />)}
-                                options={options_barrios} />
-                                <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>        
+                            <TextField select fullWidth
+                                label="Seleccione Barrio"
+                                id="ddlBarrios"
+                                className="labelleft"
+                                value={this.state.barrio}
+                                onChange={this.handleChangeBarrios}
+                                >
+                                {
+                                    this.state.options_barrios.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
+                                }
+                            </TextField>   
                         </Grid>
                         <Grid item xs={6}>
                             <TextField id="ddlSituacionLaboral" select fullWidth name="profesion" label="Situación Laboral" className="labelleft" value={this.state.profesion} onChange={e => this.setState({ profesion: e.target.value })} >

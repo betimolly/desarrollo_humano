@@ -71,7 +71,9 @@ class Backend {
     function SearchPersona() {
         $nro = $this->data->nrodoc."%";
 
-        $query = $this->conexion->prepare ("select * from personas where ndoc like ? ");
+        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, telefono, email, profesion, baja, 
+                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS nombre_barrio 
+                                            from personas where ndoc like ? ");
         $query->execute(array($nro));
         $rta = $query->fetchAll();
 
@@ -85,11 +87,13 @@ class Backend {
     }
 
 
-    function SearchBarrio() {
-        $nom = $this->data->nombre."%";
+    function SearchExactPersona() {
+        $id = $this->data->id;
 
-        $query = $this->conexion->prepare ("select num, denominacion_barrio as barrio from barrios where denominacion_barrio like ? ");
-        $query->execute(array($nom));
+        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, telefono, email, profesion, baja, 
+                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS nombre_barrio 
+                                            from personas where id=? ");
+        $query->execute(array($id));
         $rta = $query->fetchAll();
 
         if ( count($rta) > 0) {
@@ -122,6 +126,121 @@ class Backend {
         else {
             $response = [ "error" => "No se encontraron datos."];
         }
+        return json_encode($response);
+    }
+
+
+    function SearchArticulo() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare ("SELECT id, descripcion, codigo_barra, cantidad_maxima, cantidad_minima, cantidad_unidad, id_rubro, id_subrubro,  
+                                            id_marca_articulo, unidad_medida, envase, activo, fecha_baja, CASE WHEN perecedero='N' THEN 0 ELSE 1 END AS perecedero 
+                                            FROM acc_articulos WHERE id = ? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchProveedor() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare ("SELECT  id, razon_social, cuit, contacto, domicilio, telefono, email, id_localidad, observaciones_entrega, fecha_baja, 
+                                                    CASE WHEN baja='N' THEN 'No' ELSE 'Si' END AS baja  
+                                            FROM acc_proveedores WHERE id = ? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+    function SearchArticulosModulos() {
+        $txt_search = $this->data->txt_search."%"; 
+        $query = $this->conexion->prepare ("SELECT q.id, q.articulo FROM (
+                                            SELECT  
+                                            a.id, CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo
+                                            FROM acc_articulos a LEFT JOIN acc_rubros r ON a.id_rubro=r.id
+                                            LEFT JOIN acc_subrubros sr ON a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                                            ) q
+                                            WHERE q.articulo LIKE ? ");
+        $query->execute(array($txt_search));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function LoadBarrios() {
+        $query = $this->conexion->prepare ("select num as clave, denominacion_barrio as valor from barrios");
+        $query->execute();
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+    function LoadRubros() {
+        $query = $this->conexion->prepare ("SELECT id as clave, nombre as valor from acc_rubros");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    function LoadSubRubros() {
+        $id = $this->data->id;
+        $query = $this->conexion->prepare ("SELECT id as clave, nombre as valor from acc_subrubros WHERE id_rubro=:id");
+        $query->execute(array(':id' => $id));
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    private function LoadGenericData($tb) {
+        $query = $this->conexion->prepare ("SELECT id as clave, nombre as valor from acc_tabla_parametricas WHERE tabla='$tb' ");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    function LoadMarcas() {
+        return $this->LoadGenericData('MARCAARTICULO');
+    }
+
+    function LoadUnidadMedida() {
+        return $this->LoadGenericData('UNIDADMEDIDA');
+    }
+
+    function LoadEnvases() {
+        return $this->LoadGenericData('ENVASE');
+    }
+
+    function LoadLocalidades() {
+        $query = $this->conexion->prepare ("SELECT id as clave, denominacion as valor FROM localidades");
+        $query->execute();
+        $response = $query->fetchAll();
         return json_encode($response);
     }
 
@@ -171,13 +290,18 @@ class Backend {
     }
 
 
-    function ListaFamiliaresInt($id) {
-        $query = $this->conexion->prepare("SELECT f.*, CONCAT(p.tdoc, ' ', p.ndoc, ' - ', p.nombre, ' ', p.apellido) as familiar
-                                            FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
-                                            WHERE id_persona=:id");
-        $query->execute(array(':id' => $id));   
+    function ListaInstituciones() {
+        $query = $this->conexion->prepare("SELECT 
+                                                id, cuit, institucion, 
+                                                CONCAT(calle, ' ', altura) AS domicilio,
+                                                telefono,
+                                                (SELECT CONCAT(p.nombre,' ',p.apellido) FROM personas p WHERE id_persona=p.id) AS responsable,
+                                                case when baja = 'S' then 'Si' ELSE 'No' end AS baja
+                                            FROM acc_instituciones");
+        $query->execute();  
         $response = $query->fetchAll(); 
-        return $response;
+        //return $response;
+        return json_encode($response);  
     }
 
 
@@ -188,8 +312,67 @@ class Backend {
     }
     
 
+    private function ListaFamiliaresInt($id) {
+        $query = $this->conexion->prepare("SELECT f.*, CONCAT(p.tdoc, ' ', p.ndoc, ' - ', p.nombre, ' ', p.apellido) as familiar, 'N' as titular
+                                            FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
+                                            WHERE id_persona=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+
+        //Verifico que, si no tiene familiares a cargo (como titular), que sea un miembro de un grupo familiar 
+        if ( count($response) <= 0) {
+            $query = $this->conexion->prepare("SELECT f.*, CONCAT(p.tdoc, ' ', p.ndoc, ' - ', p.nombre, ' ', p.apellido) as familiar, 'S' as titular
+                                                FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_persona
+                                                WHERE id_familiar=:id");
+            $query->execute(array(':id' => $id));   
+            $response = $query->fetchAll(); 
+        }
+        return $response;
+    }
+
+
+    function ListaArticulos() {
+        $query = $this->conexion->prepare("SELECT 
+                                                id, descripcion, 
+                                                case when perecedero = 'S' then 'Si' ELSE 'No' end AS perecedero,
+                                                (select nombre from acc_marcas where id=id_marca_articulo) AS marca, 
+                                                (select nombre from acc_rubros where id=id_rubro) AS rubro,  
+                                                (select nombre from acc_subrubros where id=id_subrubro) AS subrubro, 
+                                                envase, unidad_medida,
+                                                case when activo = 'S' then 'Si' ELSE 'No' end AS activo
+                                            FROM acc_articulos");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
+
+
+    function ListaArticulosModulo() {
+        $id = $this->data->id_art;
+        $query = $this->conexion->prepare("SELECT 
+                                                a.id, CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo,
+                                                mo.cantidad
+                                            FROM acc_articulos a INNER JOIN acc_articulo_modulo mo ON mo.id_articulo=a.id LEFT JOIN acc_rubros r ON a.id_rubro=r.id
+                                            LEFT JOIN acc_subrubros sr ON a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                                            WHERE mo.id_modulo=:id");
+        $query->execute(array(':id' => $id));  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
+
+
+    function ListaProveedores() {
+        $query = $this->conexion->prepare("SELECT id, cuit, razon_social, domicilio, contacto, telefono,
+                                                case when baja = 'S' then 'Si' ELSE 'No' end AS baja
+                                           FROM acc_proveedores");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
+    
+
     function DeleteBeneficiarios() {
-        $ids = implode(',', $this->data->data); //print_r($ids);exit;
+        $ids = implode(',', $this->data->data); 
         $query = $this->conexion->prepare("UPDATE acc_beneficiarios set activo='N', fecha_baja=NOW() WHERE id in ($ids)");
         $query->execute();   
         $response = "Exito";
@@ -197,9 +380,36 @@ class Backend {
     }
     
 
+    function DeleteInstituciones() {
+        $ids = implode(',', $this->data->data); 
+        $query = $this->conexion->prepare("UPDATE acc_instituciones set baja='S', fecha_baja=NOW() WHERE id in ($ids)");
+        $query->execute();   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
     function DeletePersonas() {
-        $ids = implode(',', $this->data->data); //print_r($ids);exit;
+        $ids = implode(',', $this->data->data);
         $query = $this->conexion->prepare("UPDATE personas set baja='S', fecha_baja=NOW() WHERE id in ($ids)");
+        $query->execute();   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
+    function DeleteArticulos() {
+        $ids = implode(',', $this->data->data); 
+        $query = $this->conexion->prepare("UPDATE acc_articulos set activo='N', fecha_baja=NOW() WHERE id in ($ids)");
+        $query->execute();   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
+    function DeleteProveedores() {
+        $ids = implode(',', $this->data->data);
+        $query = $this->conexion->prepare("UPDATE acc_proveedores set baja='S', fecha_baja=NOW() WHERE id in ($ids)");
         $query->execute();   
         $response = "Exito";
         return json_encode($response);                              
@@ -216,7 +426,7 @@ class Backend {
         $email = $this->data->email;
         $calle = $this->data->calle;
         $altura = $this->data->altura;
-        $barrio = $this->data->id_barrio;
+        $barrio = $this->data->barrio;
         $prof = $this->data->profesion;
 
         try {
@@ -354,6 +564,111 @@ class Backend {
             }
             $response = array("id" => $id);
 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveArticulo() { 
+        $id = $this->data->id;
+        $descripcion = $this->data->descripcion;
+        $perecedero = $this->data->perecedero ? "S" : "N";
+        $cod_barra = $this->data->codigo_barra;
+        $cant_max = $this->data->cantidad_maxima;
+        $cant_min = $this->data->cantidad_minima;
+        $cant_un = $this->data->cantidad_unidad;
+        $id_subrubro = $this->data->id_subrubro;
+        $id_rubro = $this->data->id_rubro;
+        $id_marca = $this->data->id_marca_articulo;
+        $un_medida = $this->data->unidad_medida;
+        $envase = $this->data->envase;
+
+        try {
+                //Actualizo o inserto el artículo
+                if ($id == 0) {
+                    $query = $this->conexion->prepare ("insert into acc_articulos(id, descripcion, perecedero, codigo_barra, cantidad_maxima, cantidad_minima, 
+                                                                                  cantidad_unidad, id_rubro, id_subrubro, id_marca_articulo, unidad_medida, envase) 
+                                                        values (NULL, :descripcion, :perecedero, :codigo_barra, :cantidad_maxima, :cantidad_minima, :cantidad_unidad, 
+                                                                :id_rubro, :id_subrubro, :id_marca_articulo, :unidad_medida, :envase)");
+                    $query->execute(array(':descripcion' => $descripcion, ':perecedero' => $perecedero, ':codigo_barra' => $cod_barra, ':cantidad_maxima' => $cant_max, 
+                                          ':cantidad_minima' => $cant_min, ':cantidad_unidad' => $cant_un, ':id_rubro' => $id_rubro, ':id_subrubro' => $id_subrubro,
+                                          ':id_marca_articulo' => $id_marca, ':unidad_medida' => $un_medida, ':envase' => $envase));
+                    $response = array("id" => $this->conexion->lastInsertId()); 
+                }        
+                else {
+                    $query = $this->conexion->prepare ("update acc_articulos set descripcion=:descripcion, perecedero=:perecedero, codigo_barra=:codigo_barra, 
+                                                                cantidad_maxima=:cant_max, cantidad_minima=:cant_min, cantidad_unidad=:cant_un, id_rubro=:id_rubro, 
+                                                                id_subrubro=:id_subrubro, id_marca_articulo=:id_marca, unidad_medida=:un_medida, envase=:envase
+                                                        where id=:id");
+                    $result = $query->execute(array(':id' => $id, ':descripcion' => $descripcion, ':perecedero' => $perecedero, ':codigo_barra' => $cod_barra,
+                                                    ':cant_max' => $cant_max, ':cant_min' => $cant_min, ':cant_un' => $cant_un, ':id_rubro' => $id_rubro,
+                                                    ':id_subrubro' => $id_subrubro, ':id_marca' => $id_marca, ':un_medida' => $un_medida, ':envase' => $envase ));
+                    $response = array("id" => $id);  
+                }   
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveProveedor() { 
+        $id = $this->data->id;
+        $cuit = $this->data->cuit;
+        $razon_social = $this->data->razon_social;
+        $contacto = $this->data->contacto;
+        $domicilio = $this->data->domicilio;
+        $telefono = $this->data->telefono;
+        $email = $this->data->email;
+        $id_localidad = $this->data->id_localidad;
+        $observaciones = $this->data->observaciones_entrega;
+
+        try {
+                //Actualizo o inserto el proveedor
+                if ($id == 0) {
+                    $query = $this->conexion->prepare ("insert into acc_proveedores(id, cuit, razon_social, contacto, domicilio, telefono, email, id_localidad, observaciones_entrega) 
+                                                        values (NULL, :cuit, :razon_social, :contacto, :domicilio, :telefono, :email, :id_localidad, :observaciones)");
+                    $query->execute(array(':cuit' => $cuit, ':razon_social' => $razon_social, ':contacto' => $contacto, ':domicilio' => $domicilio, 
+                                          ':telefono' => $telefono, ':email' => $email, ':id_localidad' => $id_localidad, ':observaciones' => $observaciones));
+                    $response = array("id" => $this->conexion->lastInsertId()); 
+                }        
+                else {
+                    $query = $this->conexion->prepare ("update acc_proveedores set cuit=:cuit, razon_social=:razon_social, contacto=:contacto, domicilio=:domicilio, 
+                                                        telefono=:telefono, email=:email, id_localidad=:id_localidad, observaciones_entrega=:observaciones
+                                                        where id=:id");
+                    $result = $query->execute(array(':id' => $id, ':cuit' => $cuit, ':razon_social' => $razon_social, ':contacto' => $contacto, ':domicilio' => $domicilio, 
+                                                    ':telefono' => $telefono, ':email' => $email, ':id_localidad' => $id_localidad, ':observaciones' => $observaciones ));
+                    $response = array("id" => $id);  
+                }   
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveModuloArticulos() { 
+        $id = $this->data->id;
+        //$nombre_modulo = $this->data->nombre_modulo;
+        $lista_articulos = $this->data->lista_articulos;
+
+        try {
+            //Primero, borro los artículos del módulo
+            $query = $this->conexion->prepare ("delete from acc_articulo_modulo where id_modulo=:id");
+            $query->execute(array(':id' => $id));
+
+            //Guardo los artículos que componen al módulo
+            foreach($lista_articulos as $art) { 
+                $query = $this->conexion->prepare ("insert into acc_articulo_modulo(id_modulo, id_articulo, cantidad) 
+                                                    values (:id_modulo, :id_articulo, :cantidad)");
+                $query->execute(array(':id_modulo' => $id, ':id_articulo' => $art->id, ':cantidad' => $art->cantidad));
+            } 
+            $response = array("id" => $id); 
         }
         catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos.".$e];
