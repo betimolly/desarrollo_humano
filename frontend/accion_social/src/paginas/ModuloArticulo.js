@@ -94,10 +94,22 @@ class ModuloArticulo extends React.Component {
         this.setState({ lista_articulos: this.state.lista_articulos.filter((todo, index) => idx !== index) });
     }
     
+
     loadData = async (id) => {
         let result = await conn.listaarticulosmodulo(id);
         this.setState( { lista_articulos: result.data } );
     };
+
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.id_art !== this.props.id_art) {
+            if (this.props.id_art !== 0) {
+                this.setState( { id: this.props.id_art } );
+                this.loadData(this.props.id_art);
+            }
+        }
+    }
+
 
     componentDidMount() {
         //Verifico si es una edición

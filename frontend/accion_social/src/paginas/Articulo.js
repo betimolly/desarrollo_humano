@@ -42,12 +42,12 @@ class Articulo extends React.Component {
    
     render() {
         //Verifico si es un módulo o si es un artículo simple. Rubro 1 es MODULO
-        if (this.state.id_rubro === 1) {
+        //if (this.state.id_rubro === 1) {
             return (
                 <div className="App" >
                     <Card className="Card" >
                         <CardContent>
-                            <AppBar position="static" color="transparent">
+                            {(this.state.id_rubro === 1) && <AppBar position="static" color="transparent">
                                 <Tabs
                                     value={this.state.tab_selected}
                                     indicatorColor="primary"
@@ -57,18 +57,18 @@ class Articulo extends React.Component {
                                     <Tab label="Artículo" ></Tab>
                                     <Tab label="Artículos que lo Componen" ></Tab>
                                 </Tabs>
-                            </AppBar>
+                            </AppBar>}
                             <TabPanel value={this.state.tab_selected} index={0} >
-                                <ArticuloDatos titulo="Artículo" id_art={this.state.id_art} id_rubro={this.state.id_rubro} onAfterSave={this.handleAfterSave} onRubroChange={this.handleRubroChange} />
+                                <ArticuloDatos titulo="Artículo" id_art={this.state.id_art} onAfterSave={this.handleAfterSave} onRubroChange={this.handleRubroChange} />
                             </TabPanel>
-                            <TabPanel value={this.state.tab_selected} index={1} >
+                            {(this.state.id_rubro === 1) && <TabPanel value={this.state.tab_selected} index={1} >
                                 <ModuloArticulo titulo="Artículos que lo Componen" id_art={this.state.id_art} />
-                            </TabPanel>
+                            </TabPanel>}
                         </CardContent>                    
                     </Card>
                 </div>
             )                
-        }
+        /*}
         else {
             return (
                 <div className="App" >
@@ -79,7 +79,7 @@ class Articulo extends React.Component {
                     </Card>
                 </div>
             )  
-        }
+        }*/
     }
 }
 

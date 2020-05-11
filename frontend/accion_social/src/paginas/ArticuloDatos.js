@@ -40,6 +40,7 @@ class ArticuloDatos extends React.Component {
 
     handleChangeRubro = (e) => {
         this.setState( {id_rubro: e.target.value} );
+        this.props.onRubroChange (e.target.value);
         this.changeSubRubroId(e.target.value);
     };
 
@@ -47,7 +48,7 @@ class ArticuloDatos extends React.Component {
     changeSubRubroId = (id) => {
         conn.loadsubrubros(id).then( response => { 
             this.setState( { subrubros: response.data } );
-            this.props.onRubroChange (id);
+            
         });
     }
 
@@ -141,10 +142,10 @@ class ArticuloDatos extends React.Component {
 
 
     componentDidUpdate(prevProps) {
-        if (prevProps.id_rubro !== this.props.id_rubro) {
-            if (this.props.id_rubro !== 0) {
-                this.setState( { id_rubro: this.props.id_rubro } );
-                this.changeSubRubroId(this.props.id_rubro);
+        if (prevProps.id_art !== this.props.id_art) {
+            if (this.props.id_art !== 0) {
+                this.setState( { id: this.props.id_art } );
+                //this.changeSubRubroId(this.props.id_rubro);
                 this.reloadArticulo();
             }
         }
