@@ -59,10 +59,27 @@ class Backend {
         $rta = $query->fetchAll();
 
         if ( count($rta)>0) {
-            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"]];
+            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"]];
         }
         else {
             $response = [ "error" => "Usuario o contraseña incorrecto."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchBarrio() {
+        $txt_search = $this->data->txt_search."%";
+
+        $query = $this->conexion->prepare ("select num, denominacion_barrio AS barrio from barrios where denominacion_barrio LIKE  ? ");
+        $query->execute(array($txt_search));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
         }
         return json_encode($response);
     }
@@ -87,11 +104,28 @@ class Backend {
     }
 
 
+    function SearchSimplePersona() {
+        $nro = $this->data->nrodoc."%";
+
+        $query = $this->conexion->prepare ("select id as id_responsable, CONCAT(ndoc,' - ',nombre, ' ',apellido) AS responsable from personas where ndoc like ? ");
+        $query->execute(array($nro));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
     function SearchExactPersona() {
         $id = $this->data->id;
 
-        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, telefono, email, profesion, baja, 
-                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS nombre_barrio 
+        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, profesion, baja, 
+                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS barrio 
                                             from personas where id=? ");
         $query->execute(array($id));
         $rta = $query->fetchAll();
@@ -110,8 +144,8 @@ class Backend {
         $txt_search = $this->data->txt_search."%";
         $tipo = $this->data->pers_inst;
 
-        if ($tipo == "persona") {
-            $sql = "SELECT id AS numero, concat(tdoc , ' ' , ndoc , ' - ' , upper(nombre) , ' ', upper(apellido)) AS descripcion FROM personas WHERE ndoc like ?";
+        if ($tipo === "persona") {
+            $sql = "SELECT id AS numero, concat('DNI ' , ndoc , ' - ' , upper(nombre) , ' ', upper(apellido)) AS descripcion FROM personas WHERE ndoc like ?";
         }
         else {
             $sql = "SELECT id AS numero, CONCAT('CUIT ',cuit, ' - ',institucion) AS descripcion FROM acc_instituciones WHERE cuit LIKE ? ";
@@ -130,7 +164,66 @@ class Backend {
     }
 
 
-    function SearchArticulo() {
+    function SearchExactPersonaInstitucion() {
+        $id = $this->data->pers_inst;
+        $tipo = $this->data->tipo;
+
+        $sql = "SELECT *, 
+                case when tipo='persona' then CONCAT('DNI ', numero, ' - ',nombre)  ELSE CONCAT('CUIT ', numero, ' - ',nombre) END AS descripcion
+                FROM ( 
+                    SELECT id,  
+                        case when id_persona IS not NULL then id_persona
+                            when id_institucion IS NOT NULL then id_institucion
+                        END  AS id_beneficiario, 
+                        case when id_persona IS not NULL then (SELECT p.ndoc FROM personas p WHERE p.id=id_persona)
+                            when id_institucion IS NOT NULL then (SELECT i.cuit FROM acc_instituciones i WHERE i.id=id_institucion)
+                        END  AS numero, 
+                        case when id_persona IS not NULL then (SELECT CONCAT(p.nombre, ' ', p.apellido) FROM personas p WHERE p.id=id_persona)
+                            when id_institucion IS NOT NULL then (SELECT i.institucion FROM acc_instituciones i WHERE i.id=id_institucion)
+                        END  AS nombre,
+                        case when id_persona IS NOT NULL then 'persona' ELSE 'institucion' END AS tipo,
+                        DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
+                        case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
+                        beneficio_municipal, beneficio_provincial, beneficio_nacional,
+                        observaciones, '' as familiares
+                    FROM acc_beneficiarios ) q 
+                WHERE tipo = :tipo and id = :id";
+        
+        $query = $this->conexion->prepare ($sql);
+        $query->execute(array(':id' => $id, ':tipo' => $tipo));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchExactInstitucion() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare ("select id, institucion, cuit, id_persona AS id_responsable, telefono, email, calle, altura, barrio as id_barrio, actividad, baja, 
+                                            (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS barrio, 
+                                            (SELECT CONCAT(p.ndoc,' - ',p.nombre, ' ',p.apellido) FROM personas p WHERE p.id=id_persona) AS responsable
+                                            from acc_instituciones where id=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchExactArticulo() {
         $id = $this->data->id;
 
         $query = $this->conexion->prepare ("SELECT id, descripcion, codigo_barra, cantidad_maxima, cantidad_minima, cantidad_unidad, id_rubro, id_subrubro,  
@@ -167,6 +260,7 @@ class Backend {
         return json_encode($response);
     }
 
+
     function SearchArticulosModulos() {
         $txt_search = $this->data->txt_search."%"; 
         $query = $this->conexion->prepare ("SELECT q.id, q.articulo FROM (
@@ -189,9 +283,34 @@ class Backend {
     }
 
 
-    function LoadBarrios() {
-        $query = $this->conexion->prepare ("select num as clave, denominacion_barrio as valor from barrios");
-        $query->execute();
+    function SearchExactArticuloOC() {
+        $txt_search = $this->data->txt_search."%"; 
+        $txt_oc = $this->data->txt_oc; 
+        $id_oc = $this->data->id_oc; 
+        $params = [];
+
+        if ($id_oc != "") {
+            $where = " WHERE o.id = ? ";
+            $params[] = $id_oc;
+        }
+        else {
+            $where = " WHERE o.numero = ? ";
+            $params[] = $txt_oc;
+        }         
+        $params[] = $txt_search;
+
+        $sql = "SELECT q.id, q.articulo FROM (
+                    SELECT  d.id_orden_compra, d.cantidad, d.precio_unitario,
+                    a.id, CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo                                            
+                    FROM acc_orden_compra o LEFT JOIN acc_orden_compra_detalle d ON o.id=d.id_orden_compra 
+                    LEFT JOIN acc_articulos a ON d.id_articulo=a.id LEFT JOIN acc_rubros r ON a.id_rubro=r.id LEFT JOIN acc_subrubros sr ON
+                    a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                    $where
+                ) q
+                WHERE q.articulo LIKE ? ";
+
+        $query = $this->conexion->prepare ($sql);
+        $query->execute($params);
         $rta = $query->fetchAll();
 
         if ( count($rta) > 0) {
@@ -200,6 +319,140 @@ class Backend {
         else {
             $response = [ "error" => "No se encontraron datos."];
         }
+        return json_encode($response);
+    }
+
+
+    function SearchArticulosOC() {
+        $txt_search = $this->data->txt_search."%"; 
+        $txt_oc = $this->data->txt_oc; 
+        $id_oc = $this->data->id_oc; 
+        $params = [];
+
+        if ($id_oc != "") {
+            $where = " WHERE o.id = ? ";
+            $params[] = $id_oc;
+        }
+        else {
+            $where = " WHERE o.numero = ? ";
+            $params[] = $txt_oc;
+        }         
+        $params[] = $txt_search;
+
+        $sql = "SELECT q.id, q.articulo FROM (
+                    SELECT  d.id_orden_compra, d.cantidad, d.precio_unitario,
+                    a.id, CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo                                            
+                    FROM acc_orden_compra o LEFT JOIN acc_orden_compra_detalle d ON o.id=d.id_orden_compra 
+                    LEFT JOIN acc_articulos a ON d.id_articulo=a.id LEFT JOIN acc_rubros r ON a.id_rubro=r.id LEFT JOIN acc_subrubros sr ON
+                    a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                    $where
+                ) q
+                WHERE q.articulo LIKE ? ";
+
+        $query = $this->conexion->prepare ($sql);
+        $query->execute($params);
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+    
+
+    private function SearchDetalleOCInt($id) {
+        $query = $this->conexion->prepare("SELECT mo.id,
+                                                CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo,
+                                                a.id as id_articulo, mo.cantidad, mo.precio_unitario
+                                            FROM acc_articulos a INNER JOIN acc_orden_compra_detalle mo ON mo.id_articulo=a.id LEFT JOIN acc_rubros r ON a.id_rubro=r.id
+                                            LEFT JOIN acc_subrubros sr ON a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                                            WHERE id_orden_compra=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+        return $response;
+    }
+
+
+    function SearchOrdenCompra() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare("SELECT *, '' as detalleOC,
+                                           (SELECT p.razon_social FROM acc_proveedores p WHERE p.id=id_proveedor) AS razon_social 
+                                           FROM acc_orden_compra WHERE id=:id");
+        $query->execute(array(':id' => $id));    
+        $response = [];
+
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = $this->SearchDetalleOCInt($id);
+            $row["detalleOC"] = $detalle; 
+            $response[] = $row;
+        }
+
+        return json_encode($response);
+    }
+    
+
+    private function SearchDetalleFactInt($id) {
+        $query = $this->conexion->prepare("SELECT 
+                                                CONCAT(COALESCE(r.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',a.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo,
+                                                a.id as id_articulo, mo.cantidad, mo.precio_unitario, mo.id_orden_compra_detalle
+                                            FROM acc_factura_proveedor_detalle mo LEFT JOIN acc_orden_compra_detalle d ON d.id=mo.id_orden_compra_detalle LEFT JOIN 
+                                                acc_articulos a ON d.id_articulo=a.id  LEFT JOIN acc_rubros r ON a.id_rubro=r.id LEFT JOIN acc_subrubros sr ON 
+                                                a.id_subrubro=sr.id LEFT JOIN acc_marcas m ON a.id_marca_articulo=m.id
+                                            WHERE id_factura_proveedor=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+        return $response;
+    }
+
+
+    function SearchFactura() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare("SELECT *, '' as detalleitemsfactura,
+                                           (SELECT p.razon_social FROM acc_proveedores p WHERE p.id=id_proveedor) AS razon_social,
+                                           (SELECT numero FROM acc_orden_compra o WHERE o.id=id_orden_compra) AS orden_compra 
+                                           FROM acc_factura_proveedor WHERE id=:id");
+        $query->execute(array(':id' => $id));    
+        $response = [];
+
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = $this->SearchDetalleFactInt($id);
+            $row["detalleitemsfactura"] = $detalle; 
+            $response[] = $row;
+        }
+
+        return json_encode($response);
+    }
+
+
+    function SearchBeneficiario() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare("SELECT *, '' as detalleitemsfactura,
+                                           (SELECT p.razon_social FROM acc_proveedores p WHERE p.id=id_proveedor) AS razon_social,
+                                           (SELECT numero FROM acc_orden_compra o WHERE o.id=id_orden_compra) AS orden_compra 
+                                           FROM acc_factura_proveedor WHERE id=:id");
+        $query->execute(array(':id' => $id));    
+        $response = [];
+
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = $this->SearchDetalleFactInt($id);
+            $row["detalleitemsfactura"] = $detalle; 
+            $response[] = $row;
+        }
+
+        return json_encode($response);
+    }
+
+
+    function LoadBarrios() {
+        $query = $this->conexion->prepare ("select num as clave, denominacion_barrio as valor from barrios");
+        $query->execute();
+        $response = $query->fetchAll();
         return json_encode($response);
     }
 
@@ -244,6 +497,26 @@ class Backend {
         return json_encode($response);
     }
 
+    function LoadProveedores() {
+        $query = $this->conexion->prepare ("SELECT id as clave, razon_social as valor FROM acc_proveedores");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    function LoadOrdenesCompras() {
+        $query = $this->conexion->prepare ("SELECT id, numero FROM acc_orden_compra");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    function LoadDetalleOC() {
+        $id = $this->data->id;
+        $response = $this->SearchDetalleOCInt($id);
+        return json_encode($response);
+    }
+
 
     function ListaBeneficiarios() {
         $query = $this->conexion->prepare("SELECT 
@@ -251,6 +524,7 @@ class Backend {
                                                 case when id_persona IS not NULL then (SELECT p.ndoc FROM personas p WHERE p.id=id_persona)
                                                     when id_institucion IS NOT NULL then (SELECT i.cuit FROM acc_instituciones i WHERE i.id=id_institucion)
                                                 END  AS numero, 
+                                                case when id_persona IS NOT NULL then 'persona' ELSE 'institucion' END AS tipo,
                                                 case when id_persona IS not NULL then (SELECT CONCAT(p.nombre, ' ', p.apellido) FROM personas p WHERE p.id=id_persona)
                                                     when id_institucion IS NOT NULL then (SELECT i.institucion FROM acc_instituciones i WHERE i.id=id_institucion)
                                                 END  AS nombre,
@@ -369,6 +643,23 @@ class Backend {
         $response = $query->fetchAll(); 
         return json_encode($response);  
     }
+
+
+    function ListaOrdenesCompra() {
+        $query = $this->conexion->prepare("SELECT c.*, p.razon_social FROM acc_orden_compra c LEFT JOIN acc_proveedores p ON p.id=c.id_proveedor");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
+
+
+    function ListaFacturas() {
+        $query = $this->conexion->prepare("SELECT f.*, p.razon_social, o.numero as orden_compra FROM acc_factura_proveedor f LEFT JOIN acc_proveedores p ON 
+                                           p.id=f.id_proveedor LEFT JOIN acc_orden_compra o ON o.id=f.id_orden_compra");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
     
 
     function DeleteBeneficiarios() {
@@ -416,6 +707,15 @@ class Backend {
     }
     
 
+    /*function DeleteOrdenesCompra() {
+        $ids = implode(',', $this->data->data);
+        $query = $this->conexion->prepare("UPDATE acc_proveedores set baja='S', fecha_baja=NOW() WHERE id in ($ids)");
+        $query->execute();   
+        $response = "Exito";
+        return json_encode($response);                              
+    }*/
+    
+
     function SavePersona() {
         $id = $this->data->id;
         $ndoc = $this->data->ndoc;
@@ -426,7 +726,7 @@ class Backend {
         $email = $this->data->email;
         $calle = $this->data->calle;
         $altura = $this->data->altura;
-        $barrio = $this->data->barrio;
+        $barrio = $this->data->id_barrio;
         $prof = $this->data->profesion;
 
         try {
@@ -474,7 +774,7 @@ class Backend {
                 $response = array("id" => $this->conexion->lastInsertId());
             }
             else {
-                $valores = "id=:id, institucion=:instit, cuit=:cuit, id_persona=:id_resp, telefono=:telefono, email=:email, calle=:calle, altura=:altura, barrio=:barrio, 
+                $valores = " institucion=:instit, cuit=:cuit, id_persona=:id_resp, telefono=:telefono, email=:email, calle=:calle, altura=:altura, barrio=:barrio, 
                             actividad=:activ";
                 $query = $this->conexion->prepare ("update acc_instituciones set $valores where id=:id");
                 $query->execute(array(':id' => $id, ':instit' => $instit,  ':cuit' => $cuit, ':id_resp' => $id_resp, ':telefono' => $tel, ':email' => $email, 
@@ -541,27 +841,35 @@ class Backend {
         $tipo_beneficio_2 = $this->data->tipo_beneficio_2;
         $tipo_beneficio_3 = $this->data->tipo_beneficio_3;
         $observaciones = $this->data->observaciones;
-        $campos = "id, id_persona, id_institucion, beneficio_municipal, beneficio_provincial, beneficio_nacional, observaciones";
-        $valores = "NULL, :id_persona, :id_institucion, :beneficio_municipal, :beneficio_provincial, :beneficio_nacional, :observaciones";
 
         try {
+            //Verifico si es persona o institución
+            if ($pers_inst == "persona") {
+                $persona = $id_pers_inst;
+                $institucion = NULL;
+            }
+            else {
+                $persona = NULL;
+                $institucion = $id_pers_inst;
+            }
+
             if ($id == 0) {
-                if ($pers_inst == "persona") {
-                    $persona = $id_pers_inst;
-                    $institucion = NULL;
-                }
-                else {
-                    $persona = NULL;
-                    $institucion = $id_pers_inst;
-                }
-
-                $query = $this->conexion->prepare ("INSERT INTO acc_beneficiarios($campos) VALUES ($valores)");
-                $query->execute(array(':id_persona' => $persona, ':id_institucion' => $institucion, ':beneficio_municipal' => $tipo_beneficio_1, ':beneficio_provincial' => $tipo_beneficio_2,
-                                      ':beneficio_nacional' => $tipo_beneficio_3, ':observaciones' => $observaciones));
+                $query = $this->conexion->prepare ("INSERT INTO acc_beneficiarios(id_persona, id_institucion, beneficio_municipal, beneficio_provincial, beneficio_nacional, observaciones) 
+                                                    VALUES (:id_pers, :id_inst, :ben_muni, :ben_prov, :ben_nac, :obs)");
+                $query->execute(array(':id_pers' => $persona, ':id_inst' => $institucion, ':ben_muni' => $tipo_beneficio_1, ':ben_prov' => $tipo_beneficio_2, ':ben_nac' => $tipo_beneficio_3, 
+                                      ':obs' => $observaciones));
                 $rta = $query->fetchAll();
-
                 $id = $this->conexion->lastInsertId();
             }
+            else {
+                $query = $this->conexion->prepare ("UPDATE acc_beneficiarios SET id_persona=:id_pers, id_institucion=:id_inst, beneficio_municipal=:ben_muni, 
+                                                    beneficio_provincial=:ben_prov, beneficio_nacional=:ben_nac, observaciones=:obs
+                                                    WHERE id=:id ");
+                $query->execute(array(':id_pers' => $persona, ':id_inst' => $institucion, ':ben_muni' => $tipo_beneficio_1, ':ben_prov' => $tipo_beneficio_2, ':ben_nac' => $tipo_beneficio_3, 
+                                      ':obs' => $observaciones, ':id' => $id));
+                $rta = $query->fetchAll();
+            }
+
             $response = array("id" => $id);
 
         }
@@ -672,6 +980,96 @@ class Backend {
         }
         catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveOrdenCompra() { 
+        $id = $this->data->id;
+        $nro = $this->data->numero;
+        $expe = $this->data->numero_expediente;
+        $resol = $this->data->numero_resolucion;
+        $fecha_e = $this->data->fecha_emision;
+        $plazo = $this->data->plazo_entrega;
+        $es_ext = $this->data->proveedor_externo ? "S" : "N";
+        $destino = $this->data->destino;
+        $id_prov = $this->data->id_proveedor;
+        $observ = $this->data->observaciones_entrega;
+        $detalleOC = $this->data->detalleordencompra;
+
+
+        try {
+            //Guardo los datos de la orden de compra
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into acc_orden_compra(numero, numero_expediente, numero_resolucion, fecha_emision, plazo_entrega, proveedor_externo,
+                                                    destino, id_proveedor, observaciones_entrega) values (:nro, :expe, :resol, :fecha, :plazo, :exter, :dest, :prov, :obs)");
+                $query->execute(array(':nro' => $nro, ':expe' => $expe, ':resol' => $resol, ':fecha' => $fecha_e, ':plazo' => $plazo, ':exter' => $es_ext, ':dest' => $destino,
+                                      ':prov' => $id_prov, ':obs' => $observ));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_orden_compra set numero=:nro, numero_expediente=:expe, numero_resolucion=:resol, fecha_emision=:fecha, 
+                                                    plazo_entrega=:plazo, proveedor_externo=:exter, destino=:dest, id_proveedor=:prov, observaciones_entrega=:obs
+                                                    where id=:id");
+                $query->execute(array(':nro' => $nro, ':expe' => $expe, ':resol' => $resol, ':fecha' => $fecha_e, ':plazo' => $plazo, ':exter' => $es_ext, ':dest' => $destino,
+                                      ':prov' => $id_prov, ':obs' => $observ, ':id' => $id));
+            }
+            
+            //Guardo los artículos/detalles que componen a la orden de compras
+            $query = $this->conexion->prepare ("delete from acc_orden_compra_detalle where id_orden_compra=:id");
+            $query->execute(array(':id' => $id));
+            foreach($detalleOC as $det) { 
+                $query = $this->conexion->prepare ("insert into acc_orden_compra_detalle(cantidad, precio_unitario, id_orden_compra, id_articulo) 
+                                                    values (:cant, :precio, :id_oc, :id_articulo)");
+                $query->execute(array(':cant' => $det->cantidad, ':precio' => $det->precio_unitario, ':id_oc' => $id, ':id_articulo' => $det->id_articulo));
+            } 
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveFactura() { 
+        $id = $this->data->id;
+        $nro = $this->data->numero;
+        $fecha = $this->data->fecha;
+        $id_oc = $this->data->id_orden_compra;
+        $id_prov = $this->data->id_proveedor;
+        $observ = $this->data->observaciones;
+        $detalle = $this->data->detalleitemsfactura;
+
+        try {
+            //Guardo los datos de la factura
+            if ($id == 0) {
+                $query = $this->conexion->prepare ("insert into acc_factura_proveedor(numero, fecha, observaciones, id_proveedor, id_orden_compra)
+                                                    values (:nro, :fecha, :obs, :prov, :id_oc )");
+                $query->execute(array(':nro' => $nro, ':fecha' => $fecha, ':obs' => $observ, ':prov' => $id_prov, ':id_oc' => $id_oc));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_factura_proveedor set numero=:nro, fecha=:fecha, observaciones=:obs, id_proveedor=:prov, id_orden_compra=:id_oc 
+                                                    where id=:id");
+                $query->execute(array(':nro' => $nro, ':fecha' => $fecha, ':obs' => $observ, ':prov' => $id_prov, ':id_oc' => $id_oc, ':id' => $id));
+            }
+            
+            //Guardo los artículos/detalles que componen a la factura
+            $query = $this->conexion->prepare ("delete from acc_factura_proveedor_detalle where id_factura_proveedor=:id");
+            $query->execute(array(':id' => $id));
+            foreach($detalle as $det) { 
+                $query = $this->conexion->prepare ("insert into acc_factura_proveedor_detalle(cantidad, precio_unitario, id_factura_proveedor, id_orden_compra_detalle) 
+                                                    values (:cant, :precio, :id_fac, :id_oc_det)");
+                $query->execute(array(':cant' => $det->cantidad, ':precio' => $det->precio_unitario, ':id_fac' => $id, ':id_oc_det' => $det->id_orden_compra_detalle));
+            } 
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
         }
         return json_encode($response);
     }
