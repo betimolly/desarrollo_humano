@@ -103,7 +103,7 @@ class Beneficiario extends React.Component {
             case 1:
                 return <Familiar titulo="Familiares" wizard />;
             case 2:
-                return <FileUpload titulo="Adjunte Archivos" />; 
+                return <FileUpload titulo="Archivos Adjuntos" />; 
             case 3:
                 return <FileUpload />; //'Carga de datos de vivienda...';
             default:
