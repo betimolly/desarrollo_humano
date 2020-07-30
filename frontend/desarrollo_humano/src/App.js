@@ -3,10 +3,10 @@ import './App.css';
 import Login from './paginas/Login';
 import Home from './paginas/Home';
 import Header from "./componentes/Header";
-import { isAllowed, hasRole, getUserId } from './utils/Commons';
+//import { getAllowed } from './utils/Commons';
 import { BrowserRouter, Switch } from 'react-router-dom';
 import PrivateRoute from "./componentes/PrivateRoute";
-import PublicRoute from "./componentes/PublicRoute1";
+import PublicRoute from "./componentes/PublicRoute";
 import PrivateLinkMenu from './componentes/PrivateLinkMenu';
 import PublicLinkMenu from './componentes/PublicLinkMenu';
 import Menu from './componentes/Menu';
@@ -26,12 +26,11 @@ import ListaOrdenesCompras from './paginas/ListaOrdenesCompras';
 import OrdenCompra from './paginas/OrdenCompra';
 import ListaFacturasProveedores from './paginas/ListaFacturasProveedores';
 import FacturaProveedor from './paginas/FacturaProveedor';
-import conn from './ServiceConexion';
 
 
 class App extends React.Component{
     state = {
-        loggedIn: false, 
+        loggedIn: false
     };
 
     handleLoggedIn = loggedIn => {
@@ -48,17 +47,33 @@ class App extends React.Component{
     };
 
     componentDidMount() {
-        // sessionStorage.clear();
-
-        // conn.auth(this.props.match.params.art).then( response => {
-        //     if (!response.data) {
-                
-        //     }
-        // }).catch( error => { console.error(error) } ); 
+        sessionStorage.clear();
     }
+
+    /*getRoute = hijo => {
+        const Components = {
+            persona: Persona,
+            institucion: Institucion,
+            beneficiario: Beneficiario,
+            familiar: Familiar,
+            listabeneficiarios: ListaBeneficiarios,
+            listapersonas: ListaPersonas,
+            listainstituciones: ListaInstituciones,
+            articulo: Articulo,
+            listaarticulos: ListaArticulos,
+            proveedor: Proveedor,
+            listaproveedores: ListaProveedores,
+            listaordenescompras: ListaOrdenesCompras,
+            ordencompra: OrdenCompra,
+            listafacturasproveedores: ListaFacturasProveedores,
+            facturaproveedor: FacturaProveedor
+        };
+        return React.createElement(Components[hijo.componente], {key: hijo.id});
+    }*/
 
     render () {
         const {loggedIn}=this.state;
+        //const allowed=getAllowed();
         return (
             <div>
 
@@ -82,6 +97,12 @@ class App extends React.Component{
                                     <PublicRoute path="/desarrollo_humano/login">
                                         <Login onLoggedIn={this.handleLoggedIn }/>
                                     </PublicRoute>
+                                    {/*{
+                                       allowed && allowed.length > 0 && allowed.map(data=>data.hijos.map( hijo =>
+                                            hijo.componente && <PrivateRoute key={hijo.id} exact path={hijo.pagina} component={this.getRoute(hijo)} />
+                                        ) )
+                                    }*/}
+                                    
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_persona/:pers?" component={Persona} />
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_familiar" component={Familiar} />
                                     <PrivateRoute exact path="/desarrollo_humano/lista_personas" component={ListaPersonas} />
@@ -97,6 +118,7 @@ class App extends React.Component{
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_orden_compra/:oc?" component={OrdenCompra} />
                                     <PrivateRoute exact path="/desarrollo_humano/lista_facturas_proveedores" component={ListaFacturasProveedores} />
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_factura/:fac?" component={FacturaProveedor} />
+                                
                                 </Switch>
                             </div>
                         </div>

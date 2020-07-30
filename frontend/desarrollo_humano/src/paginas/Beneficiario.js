@@ -1,8 +1,30 @@
 import React from "react";
-import { Button, TextField, Grid, MenuItem, Card, CardContent } from '@material-ui/core';
-import { Autocomplete } from "@material-ui/lab";
+import { Button, Grid, Card, CardContent } from '@material-ui/core';
+//import { Autocomplete } from "@material-ui/lab";
+import { withStyles } from '@material-ui/core/styles';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+//import Typography from '@material-ui/core/Typography';
 import ModalConfirmacion from "../componentes/ModalConfirmacion";
+import PersonaDatos from "../componentes/PersonaDatos";
+import Familiar from "./Familiar";
+import FileUpload from "../componentes/FileUpload";
 import conn from '../ServiceConexion';
+
+const styles = {
+    root: {
+        width: '100%'
+    },
+    backButton: {
+        //marginRight: theme.spacing(1),
+        marginTop: '1em'
+    },
+    instructions: {
+        //marginTop: theme.spacing(1),
+        //marginBottom: theme.spacing(1),
+    },
+}
 
 class Beneficiario extends React.Component {
     
@@ -27,6 +49,8 @@ class Beneficiario extends React.Component {
         tipos_de_beneficiarios_3: [],
         lista_personas_instituciones: [],
         
+        activeStep: 0, 
+
         dialog_title: '',
         dialog_content: '',
         open: false
@@ -39,6 +63,7 @@ class Beneficiario extends React.Component {
     handleClose = () => {
         this.setState( { open: false} );
     };
+    
 
     handleChangeTipo = (e) => {
         this.setState({es_persona_institucion: e.target.value, lista_personas_instituciones: [] });
@@ -63,107 +88,43 @@ class Beneficiario extends React.Component {
             this.setState({pers_inst_obj: {id_pers_inst: newValue.numero, descripcion: newValue.descripcion} });
         }
     }
-    
 
-    handleChangeBeneficiario = (e) => {
-        const es_beneficiario = e.target.value;
-        const key = e.target.name;
-        const keyParts = key.split('_');
-        const index = keyParts[keyParts.length - 1];
-        const keyTipos = 'tipos_de_beneficiarios_'+index;
-
-        let tipos_de_beneficiarios;
-
-        switch (es_beneficiario) {
-            case "NO": tipos_de_beneficiarios = [{clave: "No Corresponde", valor: "No Corresponde"}];
-                break;
-            case "MUNI": tipos_de_beneficiarios = [ {clave: "Beca Estudiantil", valor: "Beca Estudiantil"}, {clave: "Subsidio", valor: "Subsidio"}, {clave: "Otro", valor: "Otro"}];
-                break;
-            case "PROV": tipos_de_beneficiarios = [ {clave: "Subsidio", valor: "Subsidio"}, {clave: "Tarjeta Río Negro Presente", valor: "Tarjeta Río Negro Presente"}, {clave: "Siprove", valor: "Siprove"}, {clave: "Otro", valor: "Otro"}];
-                break;
-            case "NAC": tipos_de_beneficiarios = [ {clave: "Asignación Universal por Hijo", valor: "Asignación Universal por Hijo"}, {clave: "Discapacidad", valor: "Discapacidad"}, {clave: "Alimentar", valor: "Alimentar"}, {clave: "Progresar", valor: "Progresar"}, {clave: "Pensión", valor: "Pensión"}];
-                break;
-            default: ;
-                break;
+    /***** Stepper Inicio*****/    
+    getSteps() {
+        return ['Datos del Titular', 'Familiares', 'Documentación Digital', 'Datos Vivienda'];
+    }
+      
+    getStepContent = (stepIndex) => {
+        const { t } = this.props.match.params;        
+        
+        switch (stepIndex) {
+            case 0:
+                return <PersonaDatos titulo="Titular" id_pers={t} />; //'Datos Personales del titular de derechos...';
+            case 1:
+                return <Familiar titulo="Familiares" wizard />;
+            case 2:
+                return <FileUpload titulo="Adjunte Archivos" />; 
+            case 3:
+                return <FileUpload />; //'Carga de datos de vivienda...';
+            default:
+                return '<h1>CHAU</h1>' ;
         }
-
-        this.setState({[key]: es_beneficiario, [keyTipos]: tipos_de_beneficiarios});
+    }
+    handleNext = () => {
+        this.setState( { activeStep : this.state.activeStep + 1 });
     };
-
-    handleFormSubmit = () => {
-        conn.savebeneficiario(this.state).then( response => {
-            if (response.data.error) {
-                this.setState({error : response.data.error});
-                this.setState({dialog_title : "Error"});
-                this.setState({dialog_content : "Error al guardar o actualizar los datos."});
-                this.handleClickOpen();
-            }
-            else {
-                this.setState({dialog_title : "Confirmación"});
-                this.setState({dialog_content : "Los datos se han guardado o actualizado correctamente."});
-                this.handleClickOpen();
-                this.setState({ id: 0,
-                                es_persona_institucion: '',
-                                id_pers_inst: '',
-                                nombre: '',
-                                descripcion: '',
-                                es_beneficiario_1: '',
-                                es_beneficiario_2: '',
-                                es_beneficiario_3: '',
-                                tipo_beneficio_1: '',
-                                tipo_beneficio_2: '',
-                                tipo_beneficio_3: '',
-                                fecha_alta: '',
-                                observaciones: ''});
-            }
-         })
-        .catch( error => { console.error(error) } );       
+    handleBack = () => {
+        this.setState( { activeStep : this.state.activeStep - 1 });
     };
-
+    /***** Stepper Fin*****/
 
     componentDidMount() {
         if (this.props.match.params.ben && this.props.match.params.t) {
-            conn.searchexactpersonainstitucion(this.props.match.params.ben, this.props.match.params.t).then( response => {
+// setState id_pers...
+
+            conn.searchexactperson(this.props.match.params.t).then( response => {
                 if (response.data.length > 0) {
                     const data = response.data[0];
-                    if (data.beneficio_municipal !== "") {
-                       this.setState({ es_beneficiario_1: 'MUNI',  
-                                       tipos_de_beneficiarios_1: [ {clave: "Beca Estudiantil", valor: "Beca Estudiantil"}, {clave: "Subsidio", valor: "Subsidio"}, {clave: "Otro", valor: "Otro"}],
-                                       tipo_beneficio_1: data.beneficio_municipal  
-                                    });    
-                    }
-                    else {
-                        this.setState({ es_beneficiario_1: 'NO', 
-                                        tipos_de_beneficiarios_1: [{clave: "No Corresponde", valor: "No Corresponde"}],
-                                        tipo_beneficio_1: "No Corresponde"  
-                                     }); 
-                    }
-
-                    if (data.beneficio_provincial !== "") {
-                       this.setState({ es_beneficiario_2: 'PROV',  
-                                       tipos_de_beneficiarios_2: [ {clave: "Subsidio", valor: "Subsidio"}, {clave: "Tarjeta Río Negro Presente", valor: "Tarjeta Río Negro Presente"}, {clave: "Siprove", valor: "Siprove"}, {clave: "Otro", valor: "Otro"}],
-                                       tipo_beneficio_2: data.beneficio_provincial
-                                    });     
-                    }
-                    else {
-                        this.setState({ es_beneficiario_2: 'NO', 
-                                        tipos_de_beneficiarios_2: [{clave: "No Corresponde", valor: "No Corresponde"}],
-                                        tipo_beneficio_2: "No Corresponde" 
-                                    }); 
-                    }
-
-                    if (data.beneficio_nacional !== "") {
-                       this.setState({ es_beneficiario_3: 'NAC',  
-                                       tipos_de_beneficiarios_3: [ {clave: "Asignación Universal por Hijo", valor: "Asignación Universal por Hijo"}, {clave: "Discapacidad", valor: "Discapacidad"}, {clave: "Alimentar", valor: "Alimentar"}, {clave: "Progresar", valor: "Progresar"}, {clave: "Pensión", valor: "Pensión"}],
-                                       tipo_beneficio_3: data.beneficio_nacional
-                                    });     
-                    }
-                    else {
-                        this.setState({ es_beneficiario_3: 'NO', 
-                                        tipos_de_beneficiarios_3: [{clave: "No Corresponde", valor: "No Corresponde"}],
-                                        tipo_beneficio_3: "No Corresponde"  
-                                     }); 
-                    }
                     this.setState( { 
                                      id: data.id,
                                      es_persona_institucion: data.tipo,
@@ -178,9 +139,12 @@ class Beneficiario extends React.Component {
             });
         }
     }
-
     
     render() {
+        
+        const steps = this.getSteps();
+        const { classes } = this.props; 
+
         return (
             <div className="App">
                 <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
@@ -188,132 +152,40 @@ class Beneficiario extends React.Component {
                     <CardContent>
                         <Grid container spacing={3} >
                             <Grid item container justify="flex-start" xs={12}>
-                                <h2>Agregar Beneficiario</h2>
+                                <h2>Historia de vida: Agregar/Editar Legajo</h2>
                             </Grid>
-                            <Grid container spacing={3} item xs={12}>
-                                {/*<form onSubmit={this.handleSubmit}>*/}
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        label="Seleccione si es Persona o Institución"
-                                        id="ddlTipoPersonaInstitucion"
-                                        className="labelleft"
-                                        value={this.state.es_persona_institucion}
-                                        onChange={this.handleChangeTipo}
-                                        >
-                                        <MenuItem value={"persona"}>Persona</MenuItem>
-                                        <MenuItem value={"institucion"}>Institución</MenuItem>
-                                    </TextField>
-                                </Grid>
-                                <Grid item sm={6} xs={12}>
-                                    <Autocomplete
-                                        autoComplete={true}
-                                        loadingText='Cargando...'
-                                        noOptionsText ="Sin datos"
-                                        value={this.state.pers_inst_obj}
-                                        inputValue={this.state.descripcion}
-                                        onChange={this.autocompleteChangePersonaInstitucion}
-                                        onInputChange={this.searchPersonaInstitucion}
-                                        getOptionLabel={option => option.descripcion }
-                                        renderInput={params => (
-                                            <TextField {...params} label="Seleccione DNI o CUIT" />)}
-                                                options={this.state.lista_personas_instituciones} />
-                                        <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
-                                </Grid>
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        label="¿Ha recibido algún tipo de beneficio?"
-                                        id="ddlBeneficiario_1"
-                                        className="labelleft"
-                                        name="es_beneficiario_1"
-                                        value={this.state.es_beneficiario_1}
-                                        onChange={this.handleChangeBeneficiario}
-                                        >
-                                        <MenuItem value={"NO"}>No</MenuItem>
-                                        <MenuItem value={"MUNI"}>Municipal</MenuItem>
-                                        <MenuItem value={"PROV"}>Provincial</MenuItem>
-                                        <MenuItem value={"NAC"}>Nacional</MenuItem>
-                                    </TextField>
-                                </Grid>
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        label="Nombre del Beneficio"
-                                        id="ddlTipoBeneficiario_1"
-                                        className="labelleft"
-                                        value={this.state.tipo_beneficio_1}
-                                        onChange={e => { this.setState({tipo_beneficio_1: e.target.value})}}
-                                        >
-                                        {
-                                            this.state.tipos_de_beneficiarios_1.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
-                                        }
-                                    </TextField>                            
-                                </Grid> 
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        id="ddlBeneficiario_2"
-                                        className="labelleft"
-                                        name="es_beneficiario_2"
-                                        value={this.state.es_beneficiario_2}
-                                        onChange={this.handleChangeBeneficiario}
-                                        >
-                                        <MenuItem value={"NO"}>No</MenuItem>
-                                        <MenuItem value={"MUNI"}>Municipal</MenuItem>
-                                        <MenuItem value={"PROV"}>Provincial</MenuItem>
-                                        <MenuItem value={"NAC"}>Nacional</MenuItem>
-                                    </TextField>
-                                </Grid>
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        id="ddlTipoBeneficiario_2"
-                                        className="labelleft"
-                                        value={this.state.tipo_beneficio_2}
-                                        onChange={e => { this.setState({tipo_beneficio_2: e.target.value})}}
-                                        >
-                                        {
-                                            this.state.tipos_de_beneficiarios_2.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
-                                        }
-                                    </TextField>                            
-                                </Grid> 
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        id="ddlBeneficiario_3"
-                                        className="labelleft"
-                                        name="es_beneficiario_3"
-                                        value={this.state.es_beneficiario_3}
-                                        onChange={this.handleChangeBeneficiario}
-                                        >
-                                        <MenuItem value={"NO"}>No</MenuItem>
-                                        <MenuItem value={"MUNI"}>Municipal</MenuItem>
-                                        <MenuItem value={"PROV"}>Provincial</MenuItem>
-                                        <MenuItem value={"NAC"}>Nacional</MenuItem>
-                                    </TextField>
-                                </Grid>
-                                <Grid item sm={6} xs={12}>
-                                    <TextField select fullWidth
-                                        id="ddlTipoBeneficiario_3"
-                                        className="labelleft"
-                                        value={this.state.tipo_beneficio_3}
-                                        onChange={e => { this.setState({tipo_beneficio_3: e.target.value})}}
-                                        >
-                                        {
-                                            this.state.tipos_de_beneficiarios_3.map(data=><MenuItem key={data.clave} value={data.clave}>{data.valor}</MenuItem>)
-                                        }
-                                    </TextField>                            
-                                </Grid> 
-                                <Grid item xs={12}>
-                                    <TextField
-                                        id="txtObservaciones"
-                                        label="Observaciones"
-                                        multiline fullWidth
-                                        rows={4}
-                                        value={this.state.observaciones}
-                                        onChange={e => { this.setState({observaciones: e.target.value})}}
-                                    />                            
-                                </Grid>  
-                                <Grid item container justify="flex-start" xs={12}>
-                                    <Button variant="contained" color="primary" onClick={e => this.handleFormSubmit(e)} >Guardar</Button>
-                                </Grid>
-                                {/*</form>*/}
-                            </Grid>                    
+                            <div className={classes.root} >
+                                <Stepper activeStep={this.state.activeStep} alternativeLabel>
+                                    {steps.map((label) => (
+                                    <Step key={label}>
+                                        <StepLabel>{label}</StepLabel>
+                                    </Step>
+                                    ))}
+                                </Stepper> 
+                                <div>
+                                    {this.state.activeStep === steps.length ? (
+                                    <div>
+                                        <p>Todos los pasos completos</p>
+                                        {/*<Button onClick={this.handleReset}>Inicio</Button>*/}
+                                    </div>
+                                    ) : (
+                                    <div>
+                                        {this.getStepContent(this.state.activeStep)}
+                                        <div className={classes.backButton}>
+                                            <Button
+                                                disabled={this.state.activeStep === 0}
+                                                onClick={this.handleBack}
+                                            >
+                                            Volver
+                                            </Button>
+                                            <Button variant="contained" color="primary" onClick={this.handleNext}>
+                                                {this.state.activeStep === steps.length - 1 ? 'Fin' : 'Siguiente'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    )}
+                                </div>
+                            </div>                   
                         </Grid>
                     </CardContent>
                 </Card >    
@@ -322,4 +194,4 @@ class Beneficiario extends React.Component {
     }
 }
 
-export default Beneficiario;
+export default withStyles(styles) (Beneficiario);

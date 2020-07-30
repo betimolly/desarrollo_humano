@@ -3,13 +3,14 @@ import { Route, Redirect } from 'react-router-dom';
 import { getToken } from '../utils/Commons';
 
 // handle the private routes
-function PublicRoute({ component: Component, ...rest }) {
-    return (
-        <Route
-            {...rest}
-            render={(props) => !getToken() ? <Component {...props} /> : <Redirect to={{ pathname: '/desarrollo_humano' }} />}
-        />
-    )
+class PublicRoute extends React.Component {
+    render(){
+        const { children: Children, ...rest } = this.props;
+        return (
+            <Route {...rest} render={(props) => !getToken() ? this.props.children : <Redirect to={{ pathname: '/desarrollo_humano' }} />} />
+
+        );
+    }
 }
 
 export default PublicRoute;

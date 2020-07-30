@@ -1,13 +1,14 @@
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
-import { getToken } from '../utils/Commons';
+import { isAllowed } from '../utils/Commons';
 
 // handle the private routes
-function PrivateRoute({ component: Component, ...rest }) {
+function PrivateRoute({ component: Component, path, ...rest }) {
     return (
         <Route
+            path = {path}
             {...rest}
-            render={(props) => getToken() ? <Component {...props} /> : <Redirect to={{ pathname: '/desarrollo_humano/login', state: { from: props.location } }} />}
+            render={(props) => isAllowed(path) ? <Component {...props} /> : <Redirect to={{ pathname: '/desarrollo_humano/login', state: { from: props.location } }} />}
         />
     )
 }

@@ -5,12 +5,27 @@ import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUser, faHandsHelping, faLandmark, faBoxOpen, faPeopleCarry } from '@fortawesome/free-solid-svg-icons'
 import { Route } from 'react-router-dom';
+import { getAllowed } from '../utils/Commons';
 
 
 class Menu extends React.Component{ 
+    
+    getIcon = data => {
+        
+        const Components = {
+            faUser: faUser,
+            faHandsHelping: faHandsHelping,
+            faLandmark: faLandmark,
+            faBoxOpen: faBoxOpen,
+            faPeopleCarry: faPeopleCarry
+        };
+
+        return <FontAwesomeIcon icon={Components[data.icono]} style={{ fontSize: '1.5em' }} />     
+    };
 
     render () {
         const { loggedIn } = this.props;
+        const allowed = getAllowed();
 
         if (loggedIn) {
             return (
@@ -27,6 +42,27 @@ class Menu extends React.Component{
                             >
                                 <SideNav.Toggle />
                                 <SideNav.Nav defaultSelected="personas">
+                                    {
+                                       allowed && allowed.length > 0 && allowed.map(data=> 
+                                        <NavItem key={data.id} eventKey={data.nombre}>
+                                            <NavIcon>
+                                                {this.getIcon(data)}
+                                            </NavIcon>
+                                            <NavText>
+                                                {data.menu}
+                                            </NavText>
+                                            {data.hijos.map(hijo => 
+                                                <NavItem key={hijo.id} eventKey={hijo.nombre}>
+                                                    <NavText>
+                                                        {hijo.menu}
+                                                    </NavText>
+                                                </NavItem>
+                                            )}
+                                        </NavItem>    
+                                        )
+                                    }
+
+                                    {/*
                                     <NavItem eventKey="personas">
                                         <NavIcon>
                                             <FontAwesomeIcon icon={faUser} style={{ fontSize: '1.5em' }} />
@@ -141,18 +177,12 @@ class Menu extends React.Component{
                                                 Agregar Artículo
                                             </NavText>
                                         </NavItem>
-                                    </NavItem>
+                                </NavItem>*/}
                                 </SideNav.Nav>
                             </SideNav>
-                            {/*<main>
-                                <Route path="/" exact component={props => <Home />} />
-                                <Route path="/home" component={props => <Home />} />
-                                <Route path="/devices" component={props => <Home />} />
-                            </main>*/}
                         </React.Fragment>
                     )}
                     />
-                
             );
 
         }

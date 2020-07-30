@@ -1,6 +1,7 @@
 import React from "react";
-import { TextField, MenuItem, Grid } from '@material-ui/core';
+import { Button, TextField, MenuItem, Grid } from '@material-ui/core';
 import { Autocomplete } from "@material-ui/lab";
+import ModalConfirmacion from "./ModalConfirmacion";
 import conn from '../ServiceConexion';
 
 
@@ -63,6 +64,38 @@ class PersonaDatos extends React.Component {
         this.setState({ barrio: newValue })
     }
 
+    handleFormSubmit = () => {
+        conn.savepersona(this.state).then( response => {
+            if (response.data.error) {
+                this.setState({error : response.data.error});
+                this.setState({dialog_title : "Error"});
+                this.setState({dialog_content : "Error al guardar o actualizar los datos."});
+                this.handleClickOpen();
+            }
+            else {
+                this.setState({dialog_title : "Confirmación"});
+                this.setState({dialog_content : "Los datos se han guardado o actualizado correctamente."});
+                this.handleClickOpen();
+                this.setState({id: 0, 
+                                nombre: '',
+                                apellido: '',
+                                ndoc: '',
+                                fecha_nacimiento: '',
+                                telefono: '',
+                                email: '',
+                                calle: '',
+                                altura: '',
+                                id_barrio: '',
+                                barrio: '',
+                                profesion: ''});
+                if (this.props.afterSavePersona) {
+                    this.props.afterSavePersona(response.data.id);
+                }               
+            }
+         })
+        .catch( error => { console.error(error) } );
+    };
+
 
     searchPersona = (e, nrodoc) => {
         this.setState({ndoc: nrodoc});
@@ -109,7 +142,7 @@ class PersonaDatos extends React.Component {
             }
         });
     } 
-/*
+
     componentDidUpdate(prevProps) {
         if (prevProps.id_pers !== this.props.id_pers) {
             if (this.props.id_pers !== 0) {
@@ -118,7 +151,7 @@ class PersonaDatos extends React.Component {
             }
         }
     }
-*/
+
     
     componentDidMount() {
         conn.loadbarrios().then( response => { 
@@ -136,6 +169,7 @@ class PersonaDatos extends React.Component {
     render() {
         return (
             <React.Fragment >
+                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
                 <Grid container spacing={3} >
                     <Grid item container justify="flex-start" xs={12}>
                         <h2>{this.props.titulo}</h2>
@@ -176,6 +210,17 @@ class PersonaDatos extends React.Component {
                             <TextField id="txtAltura" fullWidth name="altura" label="Altura" value={this.state.altura} onChange={e => this.setState({ altura: e.target.value })} ></TextField>
                         </Grid>
                         <Grid item sm={6} xs={12}>
+                            {/*<TextField select fullWidth
+                                label="Seleccione Barrio"
+                                id="ddlBarrios"
+                                className="labelleft"
+                                value={this.state.barrio}
+                                onChange={this.handleChangeBarrios}
+                                >
+                                {
+                                    this.state.options_barrios.map(data=><MenuItem key={data.id_barrio} value={data.id_barrio}>{data.barrio}</MenuItem>)
+                                }
+                            </TextField>   */}
                             <Autocomplete
                                 inputValue={this.state.barrio}
                                 onChange={this.handleChangeBarrios}
@@ -193,6 +238,12 @@ class PersonaDatos extends React.Component {
                                 <MenuItem value="Desocupado">Desocupado</MenuItem>
                                 <MenuItem value="Otro">Otro</MenuItem>
                             </TextField>
+                        </Grid>
+                        <Grid item container justify="flex-start" xs={12}>
+                            { !this.props.wizard ? 
+                                <Button variant="contained" color="primary" onClick={this.handleFormSubmit} >Guardar</Button>
+                            : ""
+                            }
                         </Grid>
                     </Grid>                    
                 </Grid>

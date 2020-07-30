@@ -68,7 +68,7 @@ class ListaBeneficiarios extends React.Component {
                     title=""
                     columns={ [
                         { title: 'Tipo', field: 'tipo' },
-                        { title: 'DNI', field: 'ndoc' },
+                        { title: 'DNI / CUIT', field: 'numero' },
                         { title: 'Nombre', field: 'nombre' },
                         { title: 'Fecha Alta', field: 'fecha_alta' },
                         { title: 'Activo', field: 'activo' },
@@ -88,8 +88,7 @@ class ListaBeneficiarios extends React.Component {
                             icon: 'edit',
                             tooltip: 'Editar Beneficiario',
                             onClick: (event, rowData) => {if (rowData.length === 1) {
-                                //this.props.history.push(`/desarrollo_humano/agregar_beneficiario/${rowData[0].tipo}/${rowData[0].id}`);
-                                this.props.history.push(`/desarrollo_humano/agregar_beneficiario/${rowData[0].id_persona}/${rowData[0].id}`);
+                                this.props.history.push(`/desarrollo_humano/agregar_beneficiario/${rowData[0].tipo}/${rowData[0].id}`);
                             } else {
 
                             }}

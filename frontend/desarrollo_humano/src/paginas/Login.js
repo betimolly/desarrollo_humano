@@ -6,11 +6,11 @@ import conn from '../ServiceConexion';
 class Login extends React.Component {
     
     state = {
-            usuario: '',
-            clave: '',
-            loading: false,
-            error: null
-        };
+        usuario: '',
+        clave: '',
+        loading: false,
+        error: null
+    };
 
     handleFormSubmit = e => {
         conn.login(this.state.usuario, this.state.clave)
@@ -20,7 +20,7 @@ class Login extends React.Component {
                                   }
                                   else {
                                       this.setState({loading:false});
-                                      setUserSession(response.data.token, response.data.user, response.data.userid);
+                                      setUserSession(response.data.token, response.data.user, response.data.userid, response.data.pages);
                                       const loggedIn = true;
                                       this.props.onLoggedIn(loggedIn);
                                   }

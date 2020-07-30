@@ -54,12 +54,39 @@ class Backend {
         $u = $this->data->user;
         $p = $this->data->pass;
 
-        $query = $this->conexion->prepare ("select * from usuarios where md5(usuario)=md5(:u) and password=md5(:p) and modulo='accion_social'");
+        $query = $this->conexion->prepare ("select * from seg_usuarios where md5(usuario)=md5(:u) and password=md5(:p) and modulo='accion_social'");
         $query->execute(array(':u' => $u, ':p' => $p));
         $rta = $query->fetchAll();
 
         if ( count($rta)>0) {
-            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"]];
+
+            //Recupero los accesos permitidos por rol de usuario
+            $query2 = $this->conexion->prepare ("SELECT p.id, p.nombre, p.pagina, p.componente, p.icono, p.menu, p.padre, p.orden 
+                                                FROM seg_roles r left join seg_rol_paginas rp ON r.id=rp.rol LEFT JOIN seg_rol_usuarios u ON u.rol=r.id LEFT JOIN seg_paginas p 
+                                                ON p.id=rp.pagina
+                                                WHERE u.usuario=:id_u
+                                                ORDER BY p.padre, p.orden");
+            $query2->execute(array(':id_u' => $rta[0]["id"]));
+            $resultado = $query2->fetchAll();
+            $accesos = [];
+            $mapIdToIndex = [];
+            $indexPadre = 0;
+            foreach ($resultado as $p) {
+                if(is_null($p["padre"])){
+                    $p["hijos"] = [];
+                    $mapIdToIndex[$p["id"]] = $indexPadre;
+                    $accesos[] = $p;
+                    $indexPadre++;
+                }
+                else{
+                    $accesos[$mapIdToIndex[$p["padre"]]]["hijos"][] = $p;
+                }
+
+                // array_push($accesos, array("id" => $p["id"], "nombre" => $p["nombre"], "pagina" => $p["pagina"], "componente" => $p["componente"], 
+                //                            "icono" => $p["icono"], "menu" => $p["menu"], "padre" => $p["padre"]));
+            }
+
+            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"], "pages" => $accesos ];
         }
         else {
             $response = [ "error" => "Usuario o contraseña incorrecto."];
@@ -519,7 +546,7 @@ class Backend {
 
 
     function ListaBeneficiarios() {
-        $query = $this->conexion->prepare("SELECT 
+        /*$query = $this->conexion->prepare("SELECT 
                                                 id, id_persona, 
                                                 case when id_persona IS not NULL then (SELECT p.ndoc FROM personas p WHERE p.id=id_persona)
                                                     when id_institucion IS NOT NULL then (SELECT i.cuit FROM acc_instituciones i WHERE i.id=id_institucion)
@@ -531,7 +558,12 @@ class Backend {
                                                 DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
                                                 case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
                                                 observaciones, '' as familiares
-                                            FROM acc_beneficiarios");
+                                            FROM acc_beneficiarios");*/
+        $query = $this->conexion->prepare("SELECT b.id, b.id_persona, ndoc, CONCAT(nombre, ' ', apellido) AS nombre,
+                                           DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
+                                           case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
+                                           observaciones, '' as familiares
+                                           FROM acc_beneficiarios b LEFT JOIN personas p ON p.id=b.id_persona");                                    
         $query->execute();    
         $response = [];
         while ($row = $query->fetch(PDO::FETCH_ASSOC)) {

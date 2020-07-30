@@ -178,7 +178,7 @@ class ArticuloDatos extends React.Component {
                     <Grid item container justify="flex-start" xs={12}>
                         <h2>Agregar Artículo</h2>
                     </Grid>
-                    <Grid container spacing={3} item sm={6} xs={12}>
+                    <Grid container spacing={3} item sm={12} xs={12}>
                         <Grid item sm={6} xs={12}>
                             <TextField select fullWidth
                                 label="Seleccione Rubro"
