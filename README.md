@@ -80,3 +80,8 @@
 
 1. Instalo un componente de React que utiliza Material:
 	npm install material-table --save
+
+## Upload de archivos
+
+1. Nos posicionamos en la ubicación ..app/frontend/desarrollo_humano/public, y creamos el link simbólico para la carpeta "archivos" (que contendrá los uploads):
+	mklink /d archivos d:\work\DesarrolloHumano\app\archivos 

@@ -127,13 +127,17 @@ class ListaBeneficiarios extends React.Component {
                                   > 
                                   {rowData.familiares.length > 0 ? (
                                         <table className="gridFamiliares">
-                                            <tr>
-                                                <th>Nombre Familiar</th>
-                                                <th>Parentesco</th>
-                                            </tr>
-                                        { 
-                                            rowData.familiares.map(f => <tr><td>{f.familiar}</td><td>{f.parentesco}</td></tr>)
-                                        } 
+                                            <thead>
+                                                <tr>
+                                                    <th>Nombre Familiar</th>
+                                                    <th>Parentesco</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            { 
+                                                rowData.familiares.map(f => <tr key={f.id}><td>{f.familiar}</td><td>{f.parentesco}</td></tr>)
+                                            } 
+                                            </tbody>
                                         </table>
                                   )
                                   :

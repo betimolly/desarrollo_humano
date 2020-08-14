@@ -1,53 +1,203 @@
 import React from "react";
-import { Button, Grid, TextField, MenuItem,  Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
+import { Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
 import MaterialTable from 'material-table';
-import { Autocomplete } from "@material-ui/lab";
+//import { Autocomplete } from "@material-ui/lab";
+import PersonaDatos from "../componentes/PersonaDatos";
 import conn from '../ServiceConexion';
 
 class Familiar extends React.Component {
     state = {
-        id_titular: 0,
-        parentesco: '',
-        familiares: [
-                        { id_familiar: 1, nombre: 'Mehmet', apellido: 'Baran', dni: 12345678 },
-                        { id_familiar: 2, nombre: 'Zerya Betül', apellido: 'Baran', dni: 99999999 },
-                    ],
+        persona : {
+            id: 0,                          //clave primaria de la tabla familiar
+            id_familiar: 0,                 //clave foránea de la tabla familiar del familiar 
+            id_titular: this.props.id_pers, //clave foránea de la tabla familiar del titular
+            nombre: '',
+            apellido: '',
+            ndoc: '',
+            fecha_nacimiento: '',
+            edad: '',
+            calle: '',
+            altura: '',
+            id_barrio: '',
+            barrio: '',
+            parentesco: '',
+            telefono: '',
+            email: '',
+            nacionalidad: '',
+            tiempo_residencia: '',
+            escolaridad: '',
+            situacion_salud: '',
+            titular: false
+        },
+        
+        index: null,
+        paises: [],
+        familiares: [],
         open_add: false,
         options_pers: []
     };
 
-    searchPersona = (e) => {
-        if (e.target.value.length >= 4) {
-            conn.searchpersona(e.target.value).then( response => {
+
+    handleClickOpenAdd = () => {
+        this.setState( { open_add: true, index: -1 } );
+    };
+    
+
+    handleCloseAdd = () => {
+        //const { index , familiares} = this.state;
+        /*if (index && familiares[index].id === 0) {
+            const newFamiliares = [
+                ...familiares.slice(0, index), 
+                ...familiares.slice(index + 1)
+            ];
+            this.setState({familiares: newFamiliares});
+        }*/
+
+        //Limpiar persona
+        const persona = {
+            id: 0,
+            id_familiar: 0,
+            id_titular: this.props.id_pers,
+            nombre: '',
+            apellido: '',
+            ndoc: '',
+            fecha_nacimiento: '',
+            edad: '',
+            calle: '',
+            altura: '',
+            id_barrio: '',
+            barrio: '',
+            parentesco: '',
+            telefono: '',
+            email: '',
+            nacionalidad: '',
+            tiempo_residencia: '',
+            escolaridad: '',
+            situacion_salud: '',
+            titular: false
+        };
+
+        this.setState( { open_add: false, index: null, persona } );
+    };
+
+
+    handleAdd = () => {
+        const { familiares, persona } = this.state;
+
+        persona.id_titular = this.props.id_pers;
+        conn.savefamiliar(persona).then( response => {
+
+            if (!response.data.error) {
+                let { index } = this.state;
+                persona.id = response.data.id;
+                persona.id_familiar = response.data.id_familiar; 
+
+                if (index === null) {
+                    index = familiares.length;
+                    //familiares.push(persona);
+                }
+                //else {
+                    const newFamiliares = [ 
+                        ...familiares.slice(0, index), 
+                        { ...persona },
+                        ...familiares.slice(index + 1)];
+                        //this.setState({  }); 
+                //}
+
+                //Limpiar persona
+                const newpersona = {
+                    id: 0,
+                    id_familiar: 0,
+                    id_titular: this.props.id_pers,
+                    nombre: '',
+                    apellido: '',
+                    ndoc: '',
+                    fecha_nacimiento: '',
+                    edad: '',
+                    calle: '',
+                    altura: '',
+                    id_barrio: '',
+                    barrio: '',
+                    parentesco: '',
+                    telefono: '',
+                    email: '',
+                    nacionalidad: '',
+                    tiempo_residencia: '',
+                    escolaridad: '',
+                    situacion_salud: '',
+                    titular: false
+                };
+                
+                this.setState({ open_add: false, persona: newpersona, index: null, familiares: newFamiliares });             
+                
+            }
+         })
+        .catch( error => { console.error(error) } );
+    };
+
+    
+    componentDidMount() {
+        conn.loadpaises().then( response => { 
+            this.setState( { paises: response.data } );
+        });
+
+        //Verifico si es una edición
+        if (this.props.id_pers) {
+            conn.listafamiliaresbenef(this.props.id_pers).then( response => {
                 if (!response.data.error) {
-                    this.setState({ options_pers : response.data});
+                    this.setState({ familiares : response.data});
                 }
              })
             .catch( error => { console.error(error) } );
         }
-    } 
+    }
 
-    autocompleteChangePersona = (e, newValue) => {
-        this.setState({ id_titular: newValue.id })
-    }    
+    getPersona = index => {
+        let persona = this.state.persona;
 
-    handleClickOpenAdd = () => {
-        this.setState( { open_add: true} );
-    };
-    
-    handleCloseAdd = () => {
-        this.setState( { open_add: false} );
+        if (index !== null) {
+            persona = this.state.familiares[index];
+        }
+
+        return persona;
     };
 
-    handleAdd = () => {
-        const data = this.state.familiares;                                           
-        const newData = {id_articulo: this.state.id_familiar, nombre: this.state.nombre, apellido: this.state.apellido, dni: this.state.dni };
-        data.push(newData);
-        this.setState({ familiares: data, open_add: false, id_familiar: '', nombre: '', apellido: '', dni: 0 });     
-    };
+    // handleChangePersona = personaProp => {
+    //     const { index, familiares } = this.state;
+    //     const newpersona = {
+    //         ...familiares[index], 
+    //         ...personaProp
+    //     };
+    //     const newFamiliares = [ 
+    //         ...familiares.slice(0, index), 
+    //         newpersona,
+    //         ...familiares.slice(index + 1)];
+    //     this.setState({familiares: newFamiliares});
+    // }
+
+    handleChangePersona = personaProp => {
+        const { persona } = this.state;
+        const newpersona = {
+            ...persona, 
+            ...personaProp
+        };
+        this.setState({persona: newpersona});
+    }
+
+
+    handleDeleteFamiliar = id => {
+        conn.deletefamiliar(id).then( response => {
+            if (response.data.error) {
+                //TODO: Ver si mostrar mensaje 
+            }
+         })
+        .catch( error => { console.error(error) } );
+    }
+
 
     render() {
-        const { options_pers } = this.state;
+        //const { options_pers } = this.state;
+        //const { index } = this.state;
       
         return (
             <React.Fragment >
@@ -58,9 +208,10 @@ class Familiar extends React.Component {
                     aria-describedby="alert-dialog-description"
                     maxWidth="lg"
                 >
-                    <DialogTitle id="alert-dialog-title">{this.props.titulo}</DialogTitle>
+                    <DialogTitle id="alert-dialog-title"><b>Agregar/Editar {this.props.titulo}</b></DialogTitle>
                     <DialogContent>
-                        <Grid container spacing={1} item xs={12}>
+                        <PersonaDatos persona={this.state.persona} es_familiar={true} onChange={this.handleChangePersona} />
+                        {/*<Grid container spacing={1} item xs={12}>
                             <Grid item sm={6} xs={12}>
                                 <Autocomplete
                                     inputValue={this.state.ndoc}
@@ -95,13 +246,27 @@ class Familiar extends React.Component {
                                 <TextField id="txtFechaNacimiento" fullWidth name="fecha_nacimiento" label="Fecha Nacimiento" type="date" InputLabelProps={{ shrink: true, }} value={this.state.fecha_nacimiento} onChange={e => this.setState({ fecha_nacimiento: e.target.value })} ></TextField>
                             </Grid>
                             <Grid item sm={6} xs={12}>
-                                <TextField id="txtNacionalidad" fullWidth name="nacionalidad" label="Nacionalidad" value={this.state.nacionalidad} onChange={e => this.setState({ nacionalidad: e.target.value })} ></TextField>
+                                <TextField id="txtTelefono" fullWidth name="telefono" label="Teléfono" value={this.state.telefono} onChange={this.handleChange} ></TextField>
                             </Grid>
                             <Grid item sm={6} xs={12}>
-                                <TextField id="txtFormacion" fullWidth name="formacion" label="Formación" value={this.state.formacion} onChange={e => this.setState({ formacion: e.target.value })} ></TextField>
+                                <TextField id="txtEmail" fullWidth name="email" label="Email" value={this.state.email} onChange={this.handleChange} ></TextField>
                             </Grid>
                             <Grid item sm={6} xs={12}>
-                                <TextField id="txtIngresos" fullWidth name="ingresos" label="Ingresos" value={this.state.ingresos} onChange={e => this.setState({ ingresos: e.target.value })} ></TextField>
+                                <TextField id="ddlNacionalidad" select fullWidth name="nacionalidad" label="Nacionalidad/País" className="labelleft" value={this.state.nacionalidad} onChange={this.handleChange} >
+                                    {   
+                                        this.state.paises.map((data) => 
+                                        <MenuItem key={data.id} value={data.nombre}>{data.nombre}</MenuItem>
+                                    )}
+                                </TextField>
+                            </Grid>
+                            <Grid item sm={6} xs={12}>
+                                <TextField id="txtTiempoResidencia" fullWidth name="tiempo_residencia" label="Tiempo Residencia" value={this.state.tiempo_residencia} onChange={this.handleChange} ></TextField>
+                            </Grid>
+                            <Grid item sm={6} xs={12}>
+                                <TextField id="txtEscolaridad" fullWidth name="escolaridad" label="Escolaridad" value={this.state.escolaridad} onChange={this.handleChange} ></TextField>
+                            </Grid>
+                            <Grid item sm={6} xs={12}>
+                                <TextField id="txtSituacionSalud" fullWidth name="situacion_salud" label="Situación Salud" value={this.state.situacion_salud} onChange={this.handleChange} ></TextField>
                             </Grid>
                             <Grid item sm={6} xs={12}>
                                 <TextField id="ddlSituacionSalud" select fullWidth name="situacion_salud" label="Situación de Salud" className="labelleft" value={this.state.situacion_salud} onChange={e => this.setState({ situacion_salud: e.target.value })} >
@@ -112,14 +277,11 @@ class Familiar extends React.Component {
                                     <MenuItem value="No">No Posee</MenuItem>
                                 </TextField>
                             </Grid>
-                            <Grid item sm={6} xs={12}>
-                                <TextField id="txtObraSocial" fullWidth name="obra_social" label="Obra Social" value={this.state.obra_social} onChange={e => this.setState({ obra_social: e.target.value })} ></TextField>
-                            </Grid>
-                        </Grid>  
+                        </Grid>  */}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={this.handleAdd} color="primary" autoFocus>
-                            Agregar
+                            Guardar
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -136,9 +298,9 @@ class Familiar extends React.Component {
                                     actions: ''
                                 },
                                 body: {
-                                    emptyDataSourceMessage: 'No hay detalle de familiares.',
+                                    emptyDataSourceMessage: 'No hay familiares cargados.',
                                     addTooltip: 'Agregar nuevo familiar',
-                                    editTooltip: 'Editar familiar',
+                                    //editTooltip: 'Editar familiar',
                                     deleteTooltip: 'Eliminar familiar',
                                     editRow: {
                                         deleteText: '¿Está seguro de eliminar este familiar?',
@@ -152,22 +314,38 @@ class Familiar extends React.Component {
                                 paging: false
                             }}
                             columns={ [
-                                { title: 'Id_familiar', field: 'id_familiar', hidden: true, cellStyle: { width: '10%' } },
-                                { title: 'Nombre', field: 'nombre', cellStyle: { width: '10%' } },
-                                { title: 'Apellido', field: 'apellido', editable: 'never', cellStyle: { width: '70%' } },
-                                { title: 'DNI', field: 'dni', cellStyle: { width: '10%' } }
+                                { title: 'Id', field: 'id', hidden: true, cellStyle: { width: '5%' } },
+                                { title: 'Id_familiar', field: 'id_familiar', hidden: true, cellStyle: { width: '5%' } },
+                                { title: 'Nombre', field: 'nombre', cellStyle: { width: '30%' } },
+                                { title: 'Apellido', field: 'apellido', editable: 'never', cellStyle: { width: '30%' } },
+                                { title: 'DNI', field: 'ndoc', cellStyle: { width: '15%' } },
+                                { title: 'Parentesco', field: 'parentesco', cellStyle: { width: '15%' } }
                             ] }
-                            data={ this.state.familiares }     
+                            data={ this.state.familiares }    
+                            onRowClick={(evt, selectedRow) => alert(selectedRow)} 
                             actions={[
                                 {
                                     icon: 'add',
                                     tooltip: 'Agregar familiar',
                                     isFreeAction: true,
-                                    onClick: (event) => this.setState( {open_add: true} )
-                                }
+                                    onClick: (event) => {
+                                        const index = null;
+                                        //const persona = this.state.persona; // this.getPersona(index); // persona vacia
+                                        this.setState( {open_add: true, index} );
+                                    }
+                                },
+                                {
+                                    icon: 'edit',
+                                    tooltip: 'Editar familiar',
+                                    onClick: (event, rowData) => {
+                                        const index = rowData.tableData.id;
+                                        const persona = this.state.familiares[index];// this.getPersona(index); // persona existente
+                                        this.setState( {open_add: true, index, persona } );
+                                    }
+                                  }
                                 ]}  
                             editable={{
-                                onRowUpdate: (newData, oldData) =>
+                                /*onRowUpdate: (newData, oldData) =>
                                     new Promise((resolve, reject) => {
                                     setTimeout(() => {
                                         {
@@ -178,18 +356,19 @@ class Familiar extends React.Component {
                                         }
                                         resolve()
                                     }, 1000)
-                                    }),
+                                    }),*/
                                 onRowDelete: oldData =>
                                     new Promise((resolve, reject) => {
-                                    setTimeout(() => {
-                                        {
-                                        let data = this.state.familiares;
-                                        const index = data.indexOf(oldData);
-                                        data.splice(index, 1);
-                                        this.setState({ familiares: data }, () => resolve());
-                                        }
-                                        resolve()
-                                    }, 1000)
+                                        setTimeout(() => {
+                                            {
+                                                let data = this.state.familiares;
+                                                const index = data.indexOf(oldData);
+                                                this.handleDeleteFamiliar(data[index].id_fliar);
+                                                data.splice(index, 1);
+                                                this.setState({ familiares: data }, () => resolve());
+                                            }
+                                            resolve()
+                                        }, 1000)
                                     }),
                                 }}
                         />                              

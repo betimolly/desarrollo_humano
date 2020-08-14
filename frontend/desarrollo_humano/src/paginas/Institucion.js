@@ -30,18 +30,20 @@ class Institucion extends React.Component {
     };
 
     searchPersona = (e, resp) => {
-        this.setState({responsable: resp});
+        if (e && e.type && e.type === 'change') {
+            this.setState({responsable: resp});
 
-        if (e.target.value.length >= 4) {
-            conn.searchsimplepersona(e.target.value).then( response => {
-                if (response.data.error) {
-                    this.setState({ options_pers: [this.state.responsable_obj] });
-                }
-                else {
-                    this.setState({ options_pers : response.data});
-                }
-             })
-            .catch( error => { console.error(error) } );
+            if (e.target.value.length >= 4) {
+                conn.searchsimplepersona(e.target.value).then( response => {
+                    if (response.data.error) {
+                        this.setState({ options_pers: [this.state.responsable_obj] });
+                    }
+                    else {
+                        this.setState({ options_pers : response.data});
+                    }
+                 })
+                .catch( error => { console.error(error) } );
+            }
         }
     } 
 
@@ -186,7 +188,7 @@ class Institucion extends React.Component {
                                         inputValue={this.state.responsable}
                                         onInputChange={this.searchPersona}
                                         onChange={this.autocompleteChangePersona}
-                                        getOptionLabel={option => option.responsable }
+                                        getOptionLabel={ option => option.responsable ? option.responsable.toString() : '' }
                                         renderInput={params => (
                                             <TextField {...params} label="Nro. Documento del Responsable de la Institución" />)}
                                         options={this.state.options_pers} />

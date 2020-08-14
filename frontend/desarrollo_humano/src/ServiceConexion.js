@@ -245,6 +245,25 @@ class ServiceConexion {
     };
     
         
+    loadFilesFromLegajo = (id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/LoadFilesFromLegajo`,
+            headers: { 'content-type': 'application/json' },
+            data: { id }
+        });
+    };
+    
+        
+    loadpaises = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/LoadPaises`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
     listabeneficiarios = () => {
         return axios({
             method: 'post',
@@ -258,6 +277,16 @@ class ServiceConexion {
         return axios({
             method: 'post',
             url: `${this.apiurl}/ListaFamiliares`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_persona }
+        });
+    };
+    
+        
+    listafamiliaresbenef = (id_persona) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaFamiliaresBenef`,
             headers: { 'content-type': 'application/json' },
             data: { id_persona }
         });
@@ -386,6 +415,46 @@ class ServiceConexion {
             data: { data }
         });
     };*/
+
+        
+    deletefile = (id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeleteFile`,
+            headers: { 'content-type': 'application/json' },
+            data: { id }
+        });
+    };
+
+        
+    deletefamiliar = (id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeleteFamiliar`,
+            headers: { 'content-type': 'application/json' },
+            data: { id }
+        });
+    };
+
+        
+    uploadfileserver = (id, name, file) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/UploadFileServer`,
+            headers: { 'content-type': 'application/json' },
+            data: { id, name, file }
+        });
+    };
+
+        
+    modifydescriptionfile = (id, name) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ModifyDescriptionFile`,
+            headers: { 'content-type': 'application/json' },
+            data: { id, name }
+        });
+    };
 
 
     savepersona = (persona) => {

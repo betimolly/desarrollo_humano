@@ -29,26 +29,29 @@ const styles = {
 class Beneficiario extends React.Component {
     
     state = {
-        id: 0,
-        es_persona_institucion: '',
-        id_pers_inst: '',
-        descripcion: '',
-        nombre: '',
-        es_beneficiario_1: '',
-        es_beneficiario_2: '',
-        es_beneficiario_3: '',
-        tipo_beneficio_1: '',
-        tipo_beneficio_2: '',
-        tipo_beneficio_3: '',
-        fecha_alta: '',
-        observaciones: '',
+        //State persona
+        persona: {
+            id: 0,
+            beneficiario: 0,
+            nombre: '',
+            apellido: '',
+            ndoc: '',
+            fecha_nacimiento: '',
+            parentesco: '',
+            edad: '',
+            telefono: '',
+            email: '',
+            calle: '',
+            altura: '',
+            id_barrio: '',
+            barrio: '',
+            nacionalidad: '',
+            tiempo_residencia: '',
+            escolaridad: '',
+            situacion_salud: '',
+            titular: true
+        },
 
-        pers_inst_obj: {id_pers_inst: '', descripcion: ''},
-        tipos_de_beneficiarios_1: [],
-        tipos_de_beneficiarios_2: [],
-        tipos_de_beneficiarios_3: [],
-        lista_personas_instituciones: [],
-        
         activeStep: 0, 
 
         dialog_title: '',
@@ -65,76 +68,90 @@ class Beneficiario extends React.Component {
     };
     
 
-    handleChangeTipo = (e) => {
-        this.setState({es_persona_institucion: e.target.value, lista_personas_instituciones: [] });
-    };
-
-    searchPersonaInstitucion = (e, pers_inst) => {
-        this.setState({ descripcion : pers_inst});
-
-        if ((e !== null) && (e.target.value.length >= 4)) {
-            conn.searchpersonainstitucion(this.state.es_persona_institucion, e.target.value).then( response => {
-                if (!response.data.error) {
-                    this.setState({ lista_personas_instituciones : response.data});
-                }
-             })
-            .catch( error => { console.error(error) } );
-        }
-    } 
-
-    autocompleteChangePersonaInstitucion = (e, newValue) => {
-        if (newValue !== null) {
-            this.setState({id_pers_inst: newValue.numero, descripcion: newValue.descripcion});
-            this.setState({pers_inst_obj: {id_pers_inst: newValue.numero, descripcion: newValue.descripcion} });
-        }
+    handleChangePersona = personaProp => {
+        const { persona } = this.state;
+        const newpersona = {
+            ...persona, 
+            ...personaProp
+        };
+        this.setState({persona: newpersona});
     }
 
     /***** Stepper Inicio*****/    
     getSteps() {
-        return ['Datos del Titular', 'Familiares', 'Documentación Digital', 'Datos Vivienda'];
+        return ['Datos del Titular', 'Familiares', 'Documentación Digital', 'Situación Habitacional', 'Área Aptitudinal', 'Reporte'];
     }
       
     getStepContent = (stepIndex) => {
-        const { t } = this.props.match.params;        
+        //const { t, ben } = this.props.match.params;        
         
         switch (stepIndex) {
             case 0:
-                return <PersonaDatos titulo="Titular" id_pers={t} />; //'Datos Personales del titular de derechos...';
+                //'Datos Personales del titular de derechos...';
+                return <PersonaDatos titulo="Titular" persona={this.state.persona} onChange={this.handleChangePersona} />; 
             case 1:
-                return <Familiar titulo="Familiares" wizard />;
+                return <Familiar titulo="Familiares" id_pers={this.state.persona.id} />;
             case 2:
-                return <FileUpload titulo="Archivos Adjuntos" />; 
+                return <FileUpload titulo="Archivos Adjuntos" id_legajo={this.state.persona.beneficiario} />; 
             case 3:
-                return <FileUpload />; //'Carga de datos de vivienda...';
+                //'Carga de datos de vivienda...';
+                return 'Datos de la vivienda'; 
+            case 4:
+                //'Carga aptitudinal...';
+                return 'Datos Aptitudinales'; 
+            case 5:
+                //'Reporte final...';
+                return 'Reporte'; 
             default:
-                return '<h1>CHAU</h1>' ;
+                return 'FIN' ;
         }
     }
+
     handleNext = () => {
-        this.setState( { activeStep : this.state.activeStep + 1 });
+        switch (this.state.activeStep) {
+            case 0:
+                this.handleFormSubmit();
+                break; 
+            default: this.setState( { activeStep : this.state.activeStep + 1 });
+                break;
+        }
     };
+
     handleBack = () => {
         this.setState( { activeStep : this.state.activeStep - 1 });
     };
     /***** Stepper Fin*****/
 
+    handleFormSubmit = () => {
+        conn.savepersona(this.state.persona).then( response => {
+            if (response.data.error) {
+                this.setState({error : response.data.error, dialog_title : "Error", dialog_content : "Error al guardar o actualizar los datos.", open: true});
+            }
+            else {
+                const {persona} = this.state; 
+                this.setState({
+                    dialog_title : "Confirmación", 
+                    dialog_content : "Los datos se han guardado o actualizado correctamente.", 
+                    open: true,
+                    activeStep : this.state.activeStep + 1,
+                    persona: {
+                        ...persona, 
+                        id: response.data.id, 
+                        beneficiario: response.data.ben
+                    }
+                });
+            }
+            //this.setState( { activeStep : this.state.activeStep + 1 });
+         })
+        .catch( error => { console.error(error) } );
+    };
+
     componentDidMount() {
         if (this.props.match.params.ben && this.props.match.params.t) {
-// setState id_pers...
-
             conn.searchexactperson(this.props.match.params.t).then( response => {
                 if (response.data.length > 0) {
                     const data = response.data[0];
-                    this.setState( { 
-                                     id: data.id,
-                                     es_persona_institucion: data.tipo,
-                                     id_pers_inst: data.id_beneficiario,
-                                     nombre: data.nombre,
-                                     descripcion: data.descripcion,
-                                     fecha_alta: data.fecha_alta,
-                                     observaciones: data.observaciones,
-                                     pers_inst_obj: {id_pers_inst: data.id_pers_inst, descripcion: data.descripcion},
-                                    } );
+                    this.setState( {  persona: {...data, beneficiario: this.props.match.params.ben }  } );
                 }
             });
         }
@@ -166,7 +183,6 @@ class Beneficiario extends React.Component {
                                     {this.state.activeStep === steps.length ? (
                                     <div>
                                         <p>Todos los pasos completos</p>
-                                        {/*<Button onClick={this.handleReset}>Inicio</Button>*/}
                                     </div>
                                     ) : (
                                     <div>
@@ -178,7 +194,7 @@ class Beneficiario extends React.Component {
                                             >
                                             Volver
                                             </Button>
-                                            <Button variant="contained" color="primary" onClick={this.handleNext}>
+                                            <Button variant="contained" title={this.state.activeStep === 0 ? "Guardar y Continuar" : "Continuar"} onClick={this.handleNext} color="primary">
                                                 {this.state.activeStep === steps.length - 1 ? 'Fin' : 'Siguiente'}
                                             </Button>
                                         </div>

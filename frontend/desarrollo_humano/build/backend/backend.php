@@ -30,22 +30,27 @@ class Backend {
     }
 
     function LogError($e) {
-        //$file = fopen("/var/www/html/beneficiarios/log/log_errores_bd.txt", "a+");
-        //fwrite($file, '>>>>>>>>>>>>>>> ERROR <<<<<<<<<<<<<<<'."\r\n Fecha: ".date('d-m-Y H:i')."\r\nError:".$e."\r\n >>>>>>>>>>>>>>>FIN ERROR<<<<<<<<<<<<<<< \r\n \r\n ".PHP_EOL);
-        //fclose($file);
+        $file = fopen("../log/log_errores_bd.txt", "a+");
+        fwrite($file, '>>>>>>>>>>>>>>> ERROR <<<<<<<<<<<<<<<'."\r\n Fecha: ".date('d-m-Y H:i')."\r\nError:".$e."\r\n >>>>>>>>>>>>>>>FIN ERROR<<<<<<<<<<<<<<< \r\n \r\n ".PHP_EOL);
+        fclose($file);
         //die('No se pudo realizar la consulta:<br />');
     }
 
     public function ProcessRequest() {
         //
         //echo json_encode($data); exit;
-        if(isset($_REQUEST["metodo"])){
-            $metodo = $_REQUEST["metodo"];
+        try{
+            if(isset($_REQUEST["metodo"])){
+                $metodo = $_REQUEST["metodo"];
 
-            if(method_exists($this, $metodo)){
-                echo $this->$metodo();
-                exit;
-            }
+                if(method_exists($this, $metodo)){
+                    echo $this->$metodo();
+                    exit;
+                }
+            }            
+        }
+        catch(Exception $e){
+            $this->LogError($e);
         }
     }
 
@@ -54,12 +59,39 @@ class Backend {
         $u = $this->data->user;
         $p = $this->data->pass;
 
-        $query = $this->conexion->prepare ("select * from usuarios where md5(usuario)=md5(:u) and password=md5(:p) and modulo='accion_social'");
+        $query = $this->conexion->prepare ("select * from seg_usuarios where md5(usuario)=md5(:u) and password=md5(:p) and modulo='accion_social'");
         $query->execute(array(':u' => $u, ':p' => $p));
         $rta = $query->fetchAll();
 
         if ( count($rta)>0) {
-            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"]];
+
+            //Recupero los accesos permitidos por rol de usuario
+            $query2 = $this->conexion->prepare ("SELECT p.id, p.nombre, p.pagina, p.componente, p.icono, p.menu, p.padre, p.orden 
+                                                FROM seg_roles r left join seg_rol_paginas rp ON r.id=rp.rol LEFT JOIN seg_rol_usuarios u ON u.rol=r.id LEFT JOIN seg_paginas p 
+                                                ON p.id=rp.pagina
+                                                WHERE u.usuario=:id_u
+                                                ORDER BY p.padre, p.orden");
+            $query2->execute(array(':id_u' => $rta[0]["id"]));
+            $resultado = $query2->fetchAll();
+            $accesos = [];
+            $mapIdToIndex = [];
+            $indexPadre = 0;
+            foreach ($resultado as $p) {
+                if(is_null($p["padre"])){
+                    $p["hijos"] = [];
+                    $mapIdToIndex[$p["id"]] = $indexPadre;
+                    $accesos[] = $p;
+                    $indexPadre++;
+                }
+                else{
+                    $accesos[$mapIdToIndex[$p["padre"]]]["hijos"][] = $p;
+                }
+
+                // array_push($accesos, array("id" => $p["id"], "nombre" => $p["nombre"], "pagina" => $p["pagina"], "componente" => $p["componente"], 
+                //                            "icono" => $p["icono"], "menu" => $p["menu"], "padre" => $p["padre"]));
+            }
+
+            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"], "pages" => $accesos ];
         }
         else {
             $response = [ "error" => "Usuario o contraseña incorrecto."];
@@ -71,7 +103,7 @@ class Backend {
     function SearchBarrio() {
         $txt_search = $this->data->txt_search."%";
 
-        $query = $this->conexion->prepare ("select num, denominacion_barrio AS barrio from barrios where denominacion_barrio LIKE  ? ");
+        $query = $this->conexion->prepare ("select cod_barrio, denominacion_barrio AS barrio from barrios where denominacion_barrio LIKE  ? ");
         $query->execute(array($txt_search));
         $rta = $query->fetchAll();
 
@@ -88,8 +120,8 @@ class Backend {
     function SearchPersona() {
         $nro = $this->data->nrodoc."%";
 
-        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, telefono, email, profesion, baja, 
-                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS nombre_barrio 
+        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, 
+                                            (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio, tiempo_residencia, escolaridad, situacion_salud 
                                             from personas where ndoc like ? ");
         $query->execute(array($nro));
         $rta = $query->fetchAll();
@@ -124,8 +156,8 @@ class Backend {
     function SearchExactPersona() {
         $id = $this->data->id;
 
-        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, profesion, baja, 
-                                                    (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS barrio 
+        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, 
+                                            tiempo_residencia, escolaridad, situacion_salud, (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio  
                                             from personas where id=? ");
         $query->execute(array($id));
         $rta = $query->fetchAll();
@@ -207,7 +239,7 @@ class Backend {
         $id = $this->data->id;
 
         $query = $this->conexion->prepare ("select id, institucion, cuit, id_persona AS id_responsable, telefono, email, calle, altura, barrio as id_barrio, actividad, baja, 
-                                            (SELECT denominacion_barrio FROM barrios WHERE num=barrio) AS barrio, 
+                                            (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio, 
                                             (SELECT CONCAT(p.ndoc,' - ',p.nombre, ' ',p.apellido) FROM personas p WHERE p.id=id_persona) AS responsable
                                             from acc_instituciones where id=? ");
         $query->execute(array($id));
@@ -450,7 +482,7 @@ class Backend {
 
 
     function LoadBarrios() {
-        $query = $this->conexion->prepare ("select num as clave, denominacion_barrio as valor from barrios");
+        $query = $this->conexion->prepare ("select cod_barrio as clave, denominacion_barrio as valor from barrios");
         $query->execute();
         $response = $query->fetchAll();
         return json_encode($response);
@@ -517,9 +549,24 @@ class Backend {
         return json_encode($response);
     }
 
+    function LoadFilesFromLegajo() {
+        $id = $this->data->id;
+        $query = $this->conexion->prepare ("SELECT * FROM acc_archivos_legajo WHERE id_beneficiario=:id and borrado='N' ");
+        $query->execute( array(':id' => $id));
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
+    function LoadPaises() {
+        $query = $this->conexion->prepare ("SELECT * FROM paises");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
 
     function ListaBeneficiarios() {
-        $query = $this->conexion->prepare("SELECT 
+        /*$query = $this->conexion->prepare("SELECT 
                                                 id, id_persona, 
                                                 case when id_persona IS not NULL then (SELECT p.ndoc FROM personas p WHERE p.id=id_persona)
                                                     when id_institucion IS NOT NULL then (SELECT i.cuit FROM acc_instituciones i WHERE i.id=id_institucion)
@@ -531,7 +578,12 @@ class Backend {
                                                 DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
                                                 case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
                                                 observaciones, '' as familiares
-                                            FROM acc_beneficiarios");
+                                            FROM acc_beneficiarios");*/
+        $query = $this->conexion->prepare("SELECT b.id, b.id_persona, ndoc, CONCAT(nombre, ' ', apellido) AS nombre,
+                                           DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
+                                           case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
+                                           observaciones, '' as familiares
+                                           FROM acc_beneficiarios b LEFT JOIN personas p ON p.id=b.id_persona");                                    
         $query->execute();    
         $response = [];
         while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
@@ -589,19 +641,43 @@ class Backend {
     private function ListaFamiliaresInt($id) {
         $query = $this->conexion->prepare("SELECT f.*, CONCAT(p.tdoc, ' ', p.ndoc, ' - ', p.nombre, ' ', p.apellido) as familiar, 'N' as titular
                                             FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
-                                            WHERE id_persona=:id");
+                                            WHERE id_titular=:id");
         $query->execute(array(':id' => $id));   
         $response = $query->fetchAll(); 
 
         //Verifico que, si no tiene familiares a cargo (como titular), que sea un miembro de un grupo familiar 
         if ( count($response) <= 0) {
             $query = $this->conexion->prepare("SELECT f.*, CONCAT(p.tdoc, ' ', p.ndoc, ' - ', p.nombre, ' ', p.apellido) as familiar, 'S' as titular
-                                                FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_persona
+                                                FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_titular
                                                 WHERE id_familiar=:id");
             $query->execute(array(':id' => $id));   
             $response = $query->fetchAll(); 
         }
         return $response;
+    }
+    
+
+    private function ListaFamiliaresBenef() {
+        $id = $this->data->id_persona;
+        $query = $this->conexion->prepare("SELECT f.id, f.id_titular, f.id_familiar, p.ndoc, p.nombre, p.apellido, f.parentesco, FALSE as titular, fecha_nacimiento, calle, 
+                                           altura, barrio as id_barrio, telefono, email, nacionalidad, baja, tiempo_residencia, escolaridad, situacion_salud, 
+                                           (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio 
+                                           FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
+                                           WHERE id_titular=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+
+        //Verifico que, si no tiene familiares a cargo (como titular), que sea un miembro de un grupo familiar 
+        if ( count($response) <= 0) {
+            $query = $this->conexion->prepare("SELECT f.id, f.id_titular, f.id_familiar, p.ndoc, p.nombre, p.apellido, f.parentesco, TRUE as titular, fecha_nacimiento, calle,  
+                                               altura, barrio as id_barrio, telefono, email, nacionalidad, baja, tiempo_residencia, escolaridad, situacion_salud, 
+                                               (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio 
+                                               FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
+                                               WHERE id_familiar=:id");
+            $query->execute(array(':id' => $id));   
+            $response = $query->fetchAll(); 
+        }
+        return json_encode($response);
     }
 
 
@@ -716,35 +792,165 @@ class Backend {
     }*/
     
 
+    function DeleteFile() {
+        $id = $this->data->id;
+        $query = $this->conexion->prepare("UPDATE acc_archivos_legajo set borrado='S' WHERE id = :id");
+        $query->execute(array(':id' => $id));   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
+    function DeleteFamiliar() {
+        $id = $this->data->id;
+        $query = $this->conexion->prepare("DELETE FROM acc_familiares WHERE id = :id");
+        $query->execute(array(':id' => $id));   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
+    function UploadFileServer() {
+        $id = $this->data->id; 
+        $name = $this->data->name; 
+        $file = $this->data->file;
+        try {
+            //Guardo en filesystem
+            if ($id !== "") {
+                $p ="../archivos/{$id}"; //$p = realpath("../archivos")."/{$id}";
+                if (!is_dir($p)) {
+                    mkdir($p);
+                }
+                $filepath = $p."/".$name; //realpath("../archivos")."/Legajo_".$id."/".$name;
+            }
+            else {
+                $filepath = realpath("../archivos")."/".$name;
+            } 
+
+            $base_to_php = explode(',', $file);
+            $data = base64_decode($base_to_php[1]);
+            file_put_contents($filepath, $data);  
+
+            //Guardo en BD
+            $query = $this->conexion->prepare("INSERT INTO acc_archivos_legajo values (null, :id, :arch, :pathar, :descrip, 'N', NOW())");
+            $query->execute(array(':id' => $id, ':arch' => $name, ':pathar' => "/desarrollo_humano/archivos/".$id."/".$name, ':descrip' => ''));  
+            $res_id = $this->conexion->lastInsertId();
+
+            $response = array("id" => $res_id);
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        
+        return json_encode($response);                              
+    }
+    
+
+    function ModifyDescriptionFile() {
+        $id = $this->data->id; 
+        $name = $this->data->name; 
+        try {
+            $query = $this->conexion->prepare("UPDATE acc_archivos_legajo set descripcion=:descrip WHERE id=:id");
+            $query->execute(array( ':id' => $id, ':descrip' => $name ));  
+            $response = "Exito";
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        
+        return json_encode($response);                              
+    }
+    
+
     function SavePersona() {
         $id = $this->data->id;
+        $ben = $this->data->beneficiario;
         $ndoc = $this->data->ndoc;
         $nom = $this->data->nombre;
         $ape = $this->data->apellido;
         $fec_nac = $this->data->fecha_nacimiento;
         $tel = $this->data->telefono;
+        $parentesco = $this->data->parentesco;
         $email = $this->data->email;
         $calle = $this->data->calle;
         $altura = $this->data->altura;
         $barrio = $this->data->id_barrio;
-        $prof = $this->data->profesion;
+        $nac = $this->data->nacionalidad;
+        $resi = $this->data->tiempo_residencia;
+        $escol = $this->data->escolaridad;
+        $salud = $this->data->situacion_salud;
+        $titular = $this->data->titular;
+        //$es_fliar = $this->data->titular;
 
         try {
             if ($id == 0) {
-                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, profesion) 
-                                                    values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, :profesion)");
+                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, 
+                                                    nacionalidad, tiempo_residencia, escolaridad, situacion_salud) 
+                                                    values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, 
+                                                    :nacionalidad, :tiempo, :escolaridad, :salud)");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
-                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
-                $response = array("id" => $this->conexion->lastInsertId());
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
+                $id = $this->conexion->lastInsertId();
+/*
+                if ($ben == 0) {
+                    $query = $this->conexion->prepare ("insert into acc_beneficiarios(id, id_persona) values (NULL, :id)");
+                    $query->execute(array(':id' => $id));
+                    $ben = $this->conexion->lastInsertId();
+                }
+
+                $response = array("id" => $id, "ben" => $ben);*/
             }
             else {
                 $valores = "ndoc=:ndoc, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
-                            telefono=:telefono, email=:email, profesion=:profesion";
+                            telefono=:telefono, email=:email, nacionalidad=:nacionalidad, tiempo_residencia=:tiempo, escolaridad=:escolaridad, situacion_salud=:salud";
                 $query = $this->conexion->prepare ("update personas set $valores where id=:id");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura'=> $altura, 
-                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':profesion' => $prof));
-                $response =  array("id" => $id);                    
+                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
+                //$response =  array("id" => $id, "ben" => $ben);                    
             }
+
+            if (($ben == 0) && $titular) {
+                $query = $this->conexion->prepare ("insert into acc_beneficiarios(id, id_persona) values (NULL, :id)");
+                $query->execute(array(':id' => $id));
+                $ben = $this->conexion->lastInsertId();
+            }
+
+            $response = array("id" => $id, "ben" => $ben);
+            
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos.".$e];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveFamiliar() { 
+        $id_titular = $this->data->id_titular;
+        $parent = $this->data->parentesco;
+        $id = $this->data->id;
+
+        try {
+            //Reemplazo ids para guardado de familiar
+            $this->data->id = $this->data->id_familiar;
+            $rta = $this->SavePersona(); 
+            $rta = json_decode($rta); 
+            $id_familiar = $rta->id;
+
+            //Actualizo o inserto el parentesco
+            if ($id == 0) { //$id_parentesco
+                $query = $this->conexion->prepare ("insert into acc_familiares(id, id_titular, id_familiar, parentesco) 
+                                                    values (NULL, :id_titular, :id_familiar, :parentesco)");
+                $query->execute(array(':id_titular' => $id_titular, ':id_familiar' => $id_familiar, ':parentesco' => $parent));
+                $id = $this->conexion->lastInsertId(); 
+            }        
+            else {
+                $query = $this->conexion->prepare ("update acc_familiares set parentesco=:parentesco, id_titular=:id_titular, id_familiar=:id_familiar
+                                                    where id=:id");
+                $result = $query->execute(array(':id_titular' => $id_titular, ':id_familiar' => $id_familiar, ':parentesco' => $parent, ':id' => $id));
+            }   
+
+            $response = array("id" => $id, "id_familiar" => $id_familiar); 
         }
         catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos.".$e];
@@ -786,45 +992,6 @@ class Backend {
             $response = [ "error" => "Error al registrar los datos."];
         }
 
-        return json_encode($response);
-    }
-
-
-    function SaveFamiliar() { 
-        $id_titular = $this->data->id_titular;
-        $parent = $this->data->parentesco;
-        $id_familiar = $this->data->id_familiar;
-
-        try {
-                //Chequeo si ya existe el parentesco en la BD
-                $query = $this->conexion->prepare ("SELECT id FROM acc_familiares WHERE id_persona=:id_persona AND id_familiar=:id_familiar");
-                $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id_familiar));
-                $rta = $query->fetchAll();
-
-                if ( count($rta) > 0) {
-                    $id_parentesco = $rta[0]["id"];
-                }
-                else {
-                    $id_parentesco = 0;
-                }
-
-                //Actualizo o inserto el parentesco
-                if ($id_parentesco == 0) {
-                    $query = $this->conexion->prepare ("insert into acc_familiares(id, id_persona, id_familiar, parentesco) 
-                                                        values (NULL, :id_persona, :id_familiar, :parentesco)");
-                    $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id_familiar, ':parentesco' => $parent));
-                    $response = array("id" => $this->conexion->lastInsertId()); 
-                }        
-                else {
-                    $query = $this->conexion->prepare ("update acc_familiares set parentesco=:parentesco 
-                                                        where id_persona=:id_persona and id_familiar=:id_familiar");
-                    $result = $query->execute(array(':id_persona' => $id_titular, ':id_familiar' => $id_familiar, ':parentesco' => $parent));
-                    $response = array("id" => $id_parentesco);  
-                }   
-        }
-        catch(Exception $e) {
-            $response = [ "error" => "Error al registrar los datos.".$e];
-        }
         return json_encode($response);
     }
 
@@ -1042,7 +1209,6 @@ class Backend {
         $id_prov = $this->data->id_proveedor;
         $observ = $this->data->observaciones;
         $detalle = $this->data->detalleitemsfactura;
-$x="";
 
         try {
             //Guardo los datos de la factura
@@ -1061,16 +1227,16 @@ $x="";
             //Guardo los artículos/detalles que componen a la factura
             $query = $this->conexion->prepare ("delete from acc_factura_proveedor_detalle where id_factura_proveedor=:id");
             $query->execute(array(':id' => $id));
-            foreach($detalle as $det) { $x=$det;
+            foreach($detalle as $det) { 
                 $query = $this->conexion->prepare ("insert into acc_factura_proveedor_detalle(cantidad, precio_unitario, id_factura_proveedor, id_orden_compra_detalle) 
                                                     values (:cant, :precio, :id_fac, :id_oc_det)");
-                $query->execute(array(':cant' => $det->cantidad, ':precio' => $det->precio_unitario, ':id_fac' => $id, ':id_oc_det' => $det->id));
+                $query->execute(array(':cant' => $det->cantidad, ':precio' => $det->precio_unitario, ':id_fac' => $id, ':id_oc_det' => $det->id_orden_compra_detalle));
             } 
 
             $response = array("id" => $id); 
         }
         catch(Exception $e) {
-            $response = [ "error" => "Error al registrar los datos.".$e."---".$x];
+            $response = [ "error" => "Error al registrar los datos."];
         }
         return json_encode($response);
     }
