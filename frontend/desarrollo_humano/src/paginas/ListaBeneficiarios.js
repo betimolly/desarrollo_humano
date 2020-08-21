@@ -21,7 +21,7 @@ class ListaBeneficiarios extends React.Component {
     
     handleDelete = async () => {
         const ids = this.state.borrar.map((v,i)=>v.id);
-        await conn.deletebeneficiarios(ids);
+        await conn.deletebeneficiarios(this.state.borrar, ids);
         this.loadData();
         this.handleClose();
     }
@@ -39,7 +39,7 @@ class ListaBeneficiarios extends React.Component {
 
         return (
             <div>
-                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} handleOk={this.handleDelete} dialog_title="Eliminar registros" dialog_content="¿Seguro que desea eliminar los registros seleccionados?" />
+                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} handleOk={this.handleDelete} dialog_title="Modificar registros" dialog_content="¿Seguro que desea activar/desactivar los registros seleccionados?" />
                 <h2 className="labelleft">Listado de Beneficiarios</h2>
                 <MaterialTable
                     className="table table-striped"
@@ -67,9 +67,10 @@ class ListaBeneficiarios extends React.Component {
                     }}
                     title=""
                     columns={ [
-                        { title: 'Tipo', field: 'tipo' },
                         { title: 'DNI', field: 'ndoc' },
                         { title: 'Nombre', field: 'nombre' },
+                        { title: 'Formación', field: 'formacion' },
+                        { title: 'Situación', field: 'situacion_laboral' },
                         { title: 'Fecha Alta', field: 'fecha_alta' },
                         { title: 'Activo', field: 'activo' },
                         { title: 'Observaciones', field: 'observaciones' }
@@ -95,7 +96,7 @@ class ListaBeneficiarios extends React.Component {
                             }}
                         },
                         {
-                            tooltip: 'Borrar todos los beneficiarios seleccionados',
+                            tooltip: 'Activar/Desactivar todos los beneficiarios seleccionados',
                             icon: 'delete',
                             onClick: (evt, data) => {
                                 this.setState({ borrar: data, open: true });

@@ -25,6 +25,8 @@ class PersonaDatos extends React.Component {
                 nombre: '',
                 apellido: '',
                 ndoc: nrodoc,
+                sexo: '',
+                cuil: '',
                 fecha_nacimiento: '',
                 edad: '',
                 calle: '',
@@ -182,8 +184,9 @@ class PersonaDatos extends React.Component {
     };
 
     render() {
-        const { persona, es_familiar } = this.props;
+        const { persona, es_familiar, es_edicion } = this.props;
         let edad = this.calcEdad(persona.fecha_nacimiento);
+        const size = es_familiar ? 4 : 6;
 
         return (
             <React.Fragment >
@@ -192,28 +195,46 @@ class PersonaDatos extends React.Component {
                         <h2>{this.props.titulo}</h2>
                     </Grid>
                     <Grid container spacing={3} item xs={12}>
-                        <Grid item sm={6} xs={12}>
-                            <Autocomplete
-                                inputValue={persona.ndoc.toString()}
-                                onInputChange={this.searchPersona}
-                                loadingText='Cargando...'
-                                noOptionsText ="Sin datos"
-                                onChange={this.autocompleteChangePersona}
-                                getOptionLabel={option => option.ndoc ? option.ndoc.toString() : '' }
-                                renderInput={params => (
-                                    <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth  />)}
-                                options={this.state.options_pers} />
-                                <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
+                        <Grid item sm={4} xs={12}>
+                            {
+                                es_edicion ? 
+                                (<TextField id="txtNdocEdit" fullWidth name="ndoc" label="Nro. Documento" value={persona.ndoc} inputProps={{readOnly: es_edicion}} ></TextField>) 
+                                :
+                                (<React.Fragment>
+                                    <Autocomplete
+                                        inputValue={persona.ndoc.toString()}
+                                        onInputChange={this.searchPersona}
+                                        loadingText='Cargando...'
+                                        noOptionsText ="Sin datos"
+                                        onChange={this.autocompleteChangePersona}
+                                        getOptionLabel={option => option.ndoc ? option.ndoc.toString() : '' }
+                                        renderInput={params => (
+                                            <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth  />)}
+                                        options={this.state.options_pers} />
+                                        <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
+                                </React.Fragment>)
+                            }
                         </Grid>
-                        <Grid item sm={6} xs={12}>
+                        <Grid item sm={4} xs={12}>
+                            <TextField id="ddlSexo" fullWidth select name="sexo" className="labelleft" label="Sexo" value={persona.sexo} onChange={this.handleChange} >
+                                <MenuItem value=""></MenuItem>
+                                <MenuItem value="F">Femenino</MenuItem>
+                                <MenuItem value="M">Masculino</MenuItem>
+                                <MenuItem value="S">Sociedad</MenuItem>
+                            </TextField>
+                        </Grid>
+                        <Grid item sm={4} xs={12}>
+                            <TextField id="txtCuil" fullWidth name="cuil" label="CUIL" value={persona.cuil} onChange={this.handleChange} ></TextField>
+                        </Grid>
+                        <Grid item sm={size} xs={12}>
                             <TextField id="txtNombre" fullWidth name="nombre" label="Nombre" value={persona.nombre} onChange={this.handleChange} ></TextField>
                         </Grid>
-                        <Grid item sm={6} xs={12}>
+                        <Grid item sm={size} xs={12}>
                             <TextField id="txtApellido" fullWidth name="apellido" label="Apellido" value={persona.apellido} onChange={this.handleChange} ></TextField>
                         </Grid>
                         {
                             es_familiar && (
-                                <Grid item sm={6} xs={12}>
+                                <Grid item sm={size} xs={12}>
                                     <TextField id="ddlParentesco" select fullWidth name="parentesco" label="Parentesco" className="labelleft" value={persona.parentesco} onChange={this.handleChange} >
                                         <MenuItem value="Hijos">Hijo</MenuItem>
                                         <MenuItem value="Padres">Padres</MenuItem>
@@ -232,10 +253,10 @@ class PersonaDatos extends React.Component {
                         <Grid item sm={2} xs={12}>
                             <TextField id="txtEdad" fullWidth inputProps={{readOnly: true}} name="edad" label="Edad" value={edad} InputLabelProps={{ shrink: true }} ></TextField>
                         </Grid>
-                        <Grid item sm={6} xs={12}>
+                        <Grid item sm={2} xs={12}>
                             <TextField id="txtTelefono" fullWidth name="telefono" label="Teléfono" value={persona.telefono} onChange={this.handleChange} ></TextField>
                         </Grid>
-                        <Grid item sm={6} xs={12}>
+                        <Grid item sm={4} xs={12}>
                             <TextField id="txtEmail" fullWidth name="email" label="Email" value={persona.email} onChange={this.handleChange} ></TextField>
                         </Grid>
                         <Grid item sm={6} xs={12}>

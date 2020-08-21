@@ -10,7 +10,9 @@ import ModalConfirmacion from "../componentes/ModalConfirmacion";
 import PersonaDatos from "../componentes/PersonaDatos";
 import Familiar from "./Familiar";
 import FileUpload from "../componentes/FileUpload";
+import SituacionHabitacional from "./SituacionHabitacional";
 import conn from '../ServiceConexion';
+import { getCuilCuit } from '../utils/Commons';
 
 const styles = {
     root: {
@@ -36,6 +38,8 @@ class Beneficiario extends React.Component {
             nombre: '',
             apellido: '',
             ndoc: '',
+            sexo: '',
+            cuil: '',
             fecha_nacimiento: '',
             parentesco: '',
             edad: '',
@@ -50,6 +54,38 @@ class Beneficiario extends React.Component {
             escolaridad: '',
             situacion_salud: '',
             titular: true
+        },
+
+        situacion_hab: {
+            id: 0,
+            id_beneficiario: this.props.match.params.ben,
+            situacion_calle: false,
+            vivienda_anterior: '',
+            conviviente_anterior: '',
+            proyeccion_situacion: '',
+            ubicacion_vivienda: '',
+            tipo_vivienda: '',
+            propiedad: '',
+            comparte_vivienda: '',
+            luz: false,
+            gas: false,
+            cloacas: false,
+            agua_corriente: false,
+            recoleccion_residuos: false,
+            servicio_colectivo: false,
+            cantidad_dormitorios: '',
+            material_piso: '',
+            material_pared: '',
+            material_techo: '',
+            banio: '',
+            tipo_banio: '',
+            agua_en_vivienda: false,
+            tanque_agua: false,
+            pilar_luz: false,
+            conexion_electrica: false,
+            tipo_calefaccion: '',
+            coccion_alimentos: '',
+            mejora_vivienda: ''
         },
 
         activeStep: 0, 
@@ -70,11 +106,27 @@ class Beneficiario extends React.Component {
 
     handleChangePersona = personaProp => {
         const { persona } = this.state;
+        
         const newpersona = {
             ...persona, 
             ...personaProp
         };
+
+        //Si no se modifica el cuil, lo calculo
+        if ( !personaProp.cuil ) {
+            newpersona.cuil = (newpersona.ndoc && newpersona.sexo && (newpersona.cuil === "" || !newpersona.cuil)) ? getCuilCuit(newpersona.ndoc, newpersona.sexo) : 0;
+        }
         this.setState({persona: newpersona});
+    }
+    
+
+    handleChangeSituacion = situacionProp => {
+        const { situacion_hab } = this.state;
+        const newsituacion = {
+            ...situacion_hab, 
+            ...situacionProp
+        };
+        this.setState({situacion_hab: newsituacion});
     }
 
     /***** Stepper Inicio*****/    
@@ -83,19 +135,17 @@ class Beneficiario extends React.Component {
     }
       
     getStepContent = (stepIndex) => {
-        //const { t, ben } = this.props.match.params;        
+        const { t } = this.props.match.params;        
         
         switch (stepIndex) {
             case 0:
-                //'Datos Personales del titular de derechos...';
-                return <PersonaDatos titulo="Titular" persona={this.state.persona} onChange={this.handleChangePersona} />; 
+                return <PersonaDatos titulo="Titular de Derechos" persona={this.state.persona} es_edicion={ t ? true : false } onChange={this.handleChangePersona} />; 
             case 1:
                 return <Familiar titulo="Familiares" id_pers={this.state.persona.id} />;
             case 2:
                 return <FileUpload titulo="Archivos Adjuntos" id_legajo={this.state.persona.beneficiario} />; 
             case 3:
-                //'Carga de datos de vivienda...';
-                return 'Datos de la vivienda'; 
+                return <SituacionHabitacional situacion_hab={this.state.situacion_hab} onChange={this.handleChangeSituacion} />; 
             case 4:
                 //'Carga aptitudinal...';
                 return 'Datos Aptitudinales'; 
@@ -111,6 +161,9 @@ class Beneficiario extends React.Component {
         switch (this.state.activeStep) {
             case 0:
                 this.handleFormSubmit();
+                break; 
+            case 3:
+                this.handleFormSubmitSituacion();
                 break; 
             default: this.setState( { activeStep : this.state.activeStep + 1 });
                 break;
@@ -146,12 +199,56 @@ class Beneficiario extends React.Component {
         .catch( error => { console.error(error) } );
     };
 
+    handleFormSubmitSituacion = () => { 
+        conn.savesituacionhabitacional(this.state.situacion_hab).then( response => {
+            if (response.data.error) {
+                this.setState({error : response.data.error, dialog_title : "Error", dialog_content : "Error al guardar o actualizar los datos.", open: true});
+            }
+            else {
+                const {situacion_hab} = this.state; 
+                this.setState({
+                    dialog_title : "Confirmación", 
+                    dialog_content : "Los datos se han guardado o actualizado correctamente.", 
+                    open: true,
+                    activeStep : this.state.activeStep + 1,
+                    situacion_hab: {
+                        ...situacion_hab, 
+                        id: response.data.id 
+                        //beneficiario: response.data.ben
+                    }
+                });
+            }
+         })
+        .catch( error => { console.error(error) } );
+    };
+
     componentDidMount() {
         if (this.props.match.params.ben && this.props.match.params.t) {
-            conn.searchexactperson(this.props.match.params.t).then( response => {
+            conn.searchexactpersona(this.props.match.params.t).then( response => {
                 if (response.data.length > 0) {
                     const data = response.data[0];
                     this.setState( {  persona: {...data, beneficiario: this.props.match.params.ben }  } );
+                }
+            });
+            conn.searchsituacionhabitacional(this.props.match.params.ben).then( response => {
+                if (response.data.length > 0) {
+                    const data = response.data[0];
+                    this.setState({  situacion_hab: {
+                                                    ...data, 
+                                                    id_beneficiario: this.props.match.params.ben,
+                                                    situacion_calle: (data.situacion_calle === 'S') ? true : false,
+                                                    luz: (data.luz === 'S') ? true : false,
+                                                    gas: (data.gas === 'S') ? true : false,
+                                                    agua_corriente: (data.agua_corriente === 'S') ? true : false,  
+                                                    cloacas: (data.cloacas === 'S') ? true : false,   
+                                                    recoleccion_residuos: (data.recoleccion_residuos === 'S') ? true : false,    
+                                                    servicio_colectivo: (data.servicio_colectivo === 'S') ? true : false,     
+                                                    agua_en_vivienda: (data.agua_en_vivienda === 'S') ? true : false,     
+                                                    tanque_agua: (data.tanque_agua === 'S') ? true : false,      
+                                                    pilar_luz: (data.pilar_luz === 'S') ? true : false,      
+                                                    conexion_electrica: (data.conexion_electrica === 'S') ? true : false 
+                                                    }  
+                                  });
                 }
             });
         }

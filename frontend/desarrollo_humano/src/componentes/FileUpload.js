@@ -156,6 +156,10 @@ class FileUpload extends React.Component {
       });
     }
 
+    handleClose = () => {
+        this.setState( { open: false} );
+    }
+
 
     loadData = (id) => {
         conn.loadFilesFromLegajo(this.props.id_legajo).then( response => {
@@ -192,7 +196,7 @@ class FileUpload extends React.Component {
       const { classes } = this.props;
         return (
             <React.Fragment>
-              <ModalConfirmacion open={this.state.open} handleOk={this.handleDelete} dialog_title="Eliminar Archivo" dialog_content="¿Desea eliminar este archivo?" /> 
+              <ModalConfirmacion open={this.state.open} handleOk={this.handleDelete} handleClose={this.handleClose} dialog_title="Eliminar Archivo" dialog_content="¿Desea eliminar este archivo?" /> 
               <Dialog
                   open={this.state.open_descripcion}
                   onClose={this.handleCloseDescrip}

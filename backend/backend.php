@@ -156,7 +156,7 @@ class Backend {
     function SearchExactPersona() {
         $id = $this->data->id;
 
-        $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, 
+        $query = $this->conexion->prepare ("select id, ndoc, sexo, cuil, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, 
                                             tiempo_residencia, escolaridad, situacion_salud, (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio  
                                             from personas where id=? ");
         $query->execute(array($id));
@@ -481,6 +481,23 @@ class Backend {
     }
 
 
+    function SearchSituacionHabitacional() {
+        $id = $this->data->id_ben;
+
+        $query = $this->conexion->prepare ("select * from acc_beneficiario_vivienda where id_beneficiario=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
     function LoadBarrios() {
         $query = $this->conexion->prepare ("select cod_barrio as clave, denominacion_barrio as valor from barrios");
         $query->execute();
@@ -580,7 +597,7 @@ class Backend {
                                                 observaciones, '' as familiares
                                             FROM acc_beneficiarios");*/
         $query = $this->conexion->prepare("SELECT b.id, b.id_persona, ndoc, CONCAT(nombre, ' ', apellido) AS nombre,
-                                           DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
+                                           DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta, formacion, situacion_laboral,
                                            case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
                                            observaciones, '' as familiares
                                            FROM acc_beneficiarios b LEFT JOIN personas p ON p.id=b.id_persona");                                    
@@ -659,8 +676,8 @@ class Backend {
 
     private function ListaFamiliaresBenef() {
         $id = $this->data->id_persona;
-        $query = $this->conexion->prepare("SELECT f.id, f.id_titular, f.id_familiar, p.ndoc, p.nombre, p.apellido, f.parentesco, FALSE as titular, fecha_nacimiento, calle, 
-                                           altura, barrio as id_barrio, telefono, email, nacionalidad, baja, tiempo_residencia, escolaridad, situacion_salud, 
+        $query = $this->conexion->prepare("SELECT f.id, f.id_titular, f.id_familiar, p.ndoc, p.sexo, p.cuil, p.nombre, p.apellido, f.parentesco, FALSE as titular, calle, 
+                                           fecha_nacimiento, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, tiempo_residencia, escolaridad, situacion_salud, 
                                            (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio 
                                            FROM acc_familiares f LEFT JOIN personas p on p.id=f.id_familiar
                                            WHERE id_titular=:id");
@@ -668,7 +685,7 @@ class Backend {
         $response = $query->fetchAll(); 
 
         //Verifico que, si no tiene familiares a cargo (como titular), que sea un miembro de un grupo familiar 
-        if ( count($response) <= 0) {
+        /*if ( count($response) <= 0) {
             $query = $this->conexion->prepare("SELECT f.id, f.id_titular, f.id_familiar, p.ndoc, p.nombre, p.apellido, f.parentesco, TRUE as titular, fecha_nacimiento, calle,  
                                                altura, barrio as id_barrio, telefono, email, nacionalidad, baja, tiempo_residencia, escolaridad, situacion_salud, 
                                                (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio 
@@ -676,7 +693,7 @@ class Backend {
                                                WHERE id_familiar=:id");
             $query->execute(array(':id' => $id));   
             $response = $query->fetchAll(); 
-        }
+        }*/
         return json_encode($response);
     }
 
@@ -739,9 +756,15 @@ class Backend {
     
 
     function DeleteBeneficiarios() {
-        $ids = implode(',', $this->data->data); 
-        $query = $this->conexion->prepare("UPDATE acc_beneficiarios set activo='N', fecha_baja=NOW() WHERE id in ($ids)");
-        $query->execute();   
+        $ids = implode(',', $this->data->lista); 
+        
+        foreach( $this->data->data as $e ) {
+            $estado = ( $e->activo == "No") ? "S" : "N"; 
+            //$query = $this->conexion->prepare("UPDATE acc_beneficiarios set activo='N', fecha_baja=NOW() WHERE id in ($ids)");
+            $query = $this->conexion->prepare("UPDATE acc_beneficiarios set activo = :estado, fecha_baja=NOW() WHERE id = :id");
+            $query->execute( array(':estado' => $estado, ':id' => $e->id) ); 
+        }
+          
         $response = "Exito";
         return json_encode($response);                              
     }
@@ -866,6 +889,8 @@ class Backend {
         $id = $this->data->id;
         $ben = $this->data->beneficiario;
         $ndoc = $this->data->ndoc;
+        $cuil = $this->data->cuil;
+        $sexo = $this->data->sexo;
         $nom = $this->data->nombre;
         $ape = $this->data->apellido;
         $fec_nac = $this->data->fecha_nacimiento;
@@ -884,12 +909,13 @@ class Backend {
 
         try {
             if ($id == 0) {
-                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, 
+                $query = $this->conexion->prepare ("insert into personas(id, tdoc, ndoc, sexo, cuil, apellido, nombre, fecha_nacimiento, calle, altura, barrio, localidad, provincia, telefono, email, 
                                                     nacionalidad, tiempo_residencia, escolaridad, situacion_salud) 
-                                                    values (:id, 'DNI', :ndoc, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, 
+                                                    values (:id, 'DNI', :ndoc, :sexo, :cuil, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, 
                                                     :nacionalidad, :tiempo, :escolaridad, :salud)");
-                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura' => $altura, 
-                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':sexo' => $sexo, ':cuil' => $cuil, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, 
+                                    ':calle' => $calle, ':altura' => $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, 
+                                    ':escolaridad'=>$escol, ':salud'=>$salud));
                 $id = $this->conexion->lastInsertId();
 /*
                 if ($ben == 0) {
@@ -901,11 +927,11 @@ class Backend {
                 $response = array("id" => $id, "ben" => $ben);*/
             }
             else {
-                $valores = "ndoc=:ndoc, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
+                $valores = "ndoc=:ndoc, sexo=:sexo, cuil=:cuil, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
                             telefono=:telefono, email=:email, nacionalidad=:nacionalidad, tiempo_residencia=:tiempo, escolaridad=:escolaridad, situacion_salud=:salud";
                 $query = $this->conexion->prepare ("update personas set $valores where id=:id");
-                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, ':altura'=> $altura, 
-                                    ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
+                $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':sexo' => $sexo, ':cuil' => $cuil, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, 
+                                    ':altura'=> $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
                 //$response =  array("id" => $id, "ben" => $ben);                    
             }
 
@@ -1237,6 +1263,73 @@ class Backend {
         }
         catch(Exception $e) {
             $response = [ "error" => "Error al registrar los datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveSituacionHabitacional() { 
+        $id = $this->data->id;
+        $id_benef = $this->data->id_beneficiario;
+        $sit_calle = $this->data->situacion_calle ? "S" : "N";;
+        $viv_ant = $this->data->vivienda_anterior;
+        $conv_ant = $this->data->conviviente_anterior;
+        $proy_sit = $this->data->proyeccion_situacion;
+        $ubic_viv = $this->data->ubicacion_vivienda;
+        $tipo_viv = $this->data->tipo_vivienda;
+        $prop = $this->data->propiedad;
+        $comp_viv = $this->data->comparte_vivienda;
+        $luz = $this->data->luz ? "S" : "N";;
+        $gas = $this->data->gas ? "S" : "N";;
+        $cloaca = $this->data->cloacas ? "S" : "N";;
+        $agua = $this->data->agua_corriente ? "S" : "N";;
+        $residuo = $this->data->recoleccion_residuos ? "S" : "N";;
+        $cole = $this->data->servicio_colectivo ? "S" : "N";;
+        $cant_dorm = $this->data->cantidad_dormitorios;
+        $piso = $this->data->material_piso;
+        $pared = $this->data->material_pared;
+        $techo = $this->data->material_techo;
+        $banio = $this->data->banio;
+        $tipo_banio = $this->data->tipo_banio;
+        $agua_viv = $this->data->agua_en_vivienda ? "S" : "N";;
+        $tanque = $this->data->tanque_agua ? "S" : "N";;
+        $pilar = $this->data->pilar_luz ? "S" : "N";;
+        $conex = $this->data->conexion_electrica ? "S" : "N";;
+        $calef = $this->data->tipo_calefaccion;
+        $alimento = $this->data->coccion_alimentos;
+        $mejora_viv = $this->data->mejora_vivienda;
+
+        try {
+            if ($id == "0") {
+                $query = $this->conexion->prepare ("insert into acc_beneficiario_vivienda values (NULL, :id_ben, :sit_calle, :viv_ant, :conv_ant, :proyecc, :ubi, :tipov, :prop, 
+                                                    :comparte, :luz, :gas, :agua, :cloaca, :residuo, :cole, :cant_dormi, :piso, :pared, :techo, :banio, :tipo, :agua_viv, :tanque, 
+                                                    :pilar, :conex, :calef, :alimen, :mejora )");
+                $query->execute(array(':id_ben' => $id_benef, ':sit_calle' => $sit_calle, ':viv_ant' => $viv_ant, ':conv_ant' => $conv_ant, ':luz' => $luz,
+                                      ':proyecc' => $proy_sit, ':ubi' => $ubic_viv, ':tipov' => $tipo_viv, ':prop' => $prop, ':comparte' => $comp_viv, ':gas' => $gas, 
+                                      ':agua' => $agua, ':cloaca' => $cloaca, ':residuo' => $residuo, ':cole' => $cole, ':cant_dormi' => $cant_dorm, ':piso' => $piso,
+                                      ':pared' => $pared, ':techo' => $techo, ':banio' => $banio, ':tipo' => $tipo_banio, ':agua_viv' => $agua_viv, ':tanque' => $tanque, 
+                                      ':pilar' => $pilar, ':conex' => $conex, ':calef' => $calef, ':alimen' => $alimento, ':mejora' => $mejora_viv));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_beneficiario_vivienda set situacion_calle=:sit_calle, vivienda_anterior=:viv_ant, conviviente_anterior=:conv_ant, 
+                                                    proyeccion_situacion=:proyecc, ubicacion_vivienda=:ubi, tipo_vivienda=:tipov, propiedad=:prop, comparte_vivienda=:comparte,  
+                                                    cloacas=:cloaca,luz=:luz, gas=:gas, agua_corriente=:agua, recoleccion_residuos=:residuo, material_piso=:piso, servicio_colectivo=:cole, 
+                                                    cantidad_dormitorios=:cant_dormi, material_pared=:pared, material_techo=:techo, banio=:banio, tipo_banio=:tipo, agua_en_vivienda=:agua_viv, 
+                                                    tanque_agua=:tanque, pilar_luz=:pilar, conexion_electrica=:conex, tipo_calefaccion=:calef, coccion_alimentos=:alimen, 
+                                                    mejora_vivienda=:mejora where id=:id");
+                $query->execute(array(':id' => $id, ':sit_calle' => $sit_calle, ':viv_ant' => $viv_ant, ':conv_ant' => $conv_ant, ':luz' => $luz, ':proyecc' => $proy_sit, 
+                                        ':ubi' => $ubic_viv, ':tipov' => $tipo_viv, ':prop' => $prop, ':comparte' => $comp_viv, ':gas' => $gas, ':agua' => $agua, 
+                                        ':cloaca' => $cloaca, ':residuo' => $residuo, ':cole' => $cole, ':cant_dormi' => $cant_dorm, ':piso' => $piso, ':pared' => $pared, 
+                                        ':techo' => $techo, ':banio' => $banio, ':tipo' => $tipo_banio, ':agua_viv' => $agua_viv, ':tanque' => $tanque, ':pilar' => $pilar, 
+                                        ':conex' => $conex, ':calef' => $calef, ':alimen' => $alimento, ':mejora' => $mejora_viv));
+            }
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
         }
         return json_encode($response);
     }

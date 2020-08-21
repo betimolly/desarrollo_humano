@@ -4,6 +4,7 @@ import MaterialTable from 'material-table';
 //import { Autocomplete } from "@material-ui/lab";
 import PersonaDatos from "../componentes/PersonaDatos";
 import conn from '../ServiceConexion';
+import { getCuilCuit } from '../utils/Commons';
 
 class Familiar extends React.Component {
     state = {
@@ -14,6 +15,8 @@ class Familiar extends React.Component {
             nombre: '',
             apellido: '',
             ndoc: '',
+            sexo: '',
+            cuil: '',
             fecha_nacimiento: '',
             edad: '',
             calle: '',
@@ -61,6 +64,8 @@ class Familiar extends React.Component {
             nombre: '',
             apellido: '',
             ndoc: '',
+            sexo: '',
+            cuil: '',
             fecha_nacimiento: '',
             edad: '',
             calle: '',
@@ -112,6 +117,8 @@ class Familiar extends React.Component {
                     nombre: '',
                     apellido: '',
                     ndoc: '',
+                    sexo: '',
+                    cuil: '',
                     fecha_nacimiento: '',
                     edad: '',
                     calle: '',
@@ -152,7 +159,7 @@ class Familiar extends React.Component {
         }
     }
 
-    getPersona = index => {
+    /*getPersona = index => {
         let persona = this.state.persona;
 
         if (index !== null) {
@@ -160,7 +167,7 @@ class Familiar extends React.Component {
         }
 
         return persona;
-    };
+    };*/
 
     // handleChangePersona = personaProp => {
     //     const { index, familiares } = this.state;
@@ -177,10 +184,20 @@ class Familiar extends React.Component {
 
     handleChangePersona = personaProp => {
         const { persona } = this.state;
+   
         const newpersona = {
             ...persona, 
-            ...personaProp
+            ...personaProp,
+            id_familiar: personaProp.id ?? persona.id_familiar,
+            id: persona.id
         };
+        
+
+        //Si no se modifica el cuil, lo calculo
+        if ( !personaProp.cuil ) {
+            newpersona.cuil = (newpersona.ndoc && newpersona.sexo && (newpersona.cuil === "" || !newpersona.cuil)) ? getCuilCuit(newpersona.ndoc, newpersona.sexo) : 0;
+        }
+
         this.setState({persona: newpersona});
     }
 
@@ -197,7 +214,7 @@ class Familiar extends React.Component {
 
     render() {
         //const { options_pers } = this.state;
-        //const { index } = this.state;
+        const { index } = this.state;
       
         return (
             <React.Fragment >
@@ -210,7 +227,7 @@ class Familiar extends React.Component {
                 >
                     <DialogTitle id="alert-dialog-title"><b>Agregar/Editar {this.props.titulo}</b></DialogTitle>
                     <DialogContent>
-                        <PersonaDatos persona={this.state.persona} es_familiar={true} onChange={this.handleChangePersona} />
+                        <PersonaDatos persona={this.state.persona} es_familiar={true} es_edicion={ index!==null } onChange={this.handleChangePersona} />
                         {/*<Grid container spacing={1} item xs={12}>
                             <Grid item sm={6} xs={12}>
                                 <Autocomplete
@@ -322,7 +339,7 @@ class Familiar extends React.Component {
                                 { title: 'Parentesco', field: 'parentesco', cellStyle: { width: '15%' } }
                             ] }
                             data={ this.state.familiares }    
-                            onRowClick={(evt, selectedRow) => alert(selectedRow)} 
+                            //onRowClick={(evt, selectedRow) => alert(selectedRow)} 
                             actions={[
                                 {
                                     icon: 'add',
@@ -363,7 +380,7 @@ class Familiar extends React.Component {
                                             {
                                                 let data = this.state.familiares;
                                                 const index = data.indexOf(oldData);
-                                                this.handleDeleteFamiliar(data[index].id_fliar);
+                                                this.handleDeleteFamiliar(data[index].id);
                                                 data.splice(index, 1);
                                                 this.setState({ familiares: data }, () => resolve());
                                             }

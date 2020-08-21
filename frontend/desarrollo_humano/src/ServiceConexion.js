@@ -33,7 +33,7 @@ class ServiceConexion {
     };
     
 
-    searchexactperson = (id) => {
+    searchexactpersona = (id) => {
         return axios({
             method: 'post',
             url: `${this.apiurl}/SearchExactPersona`,
@@ -149,6 +149,16 @@ class ServiceConexion {
             url: `${this.apiurl}/SearchBeneficiario`,
             headers: { 'content-type': 'application/json' },
             data: { id }
+        });
+    };
+    
+
+    searchsituacionhabitacional = (id_ben) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSituacionHabitacional`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_ben }
         });
     };
     
@@ -367,12 +377,12 @@ class ServiceConexion {
     };
     
         
-    deletebeneficiarios = (data) => {
+    deletebeneficiarios = (data, lista) => {
         return axios({
             method: 'post',
             url: `${this.apiurl}/DeleteBeneficiarios`,
             headers: { 'content-type': 'application/json' },
-            data: { data }
+            data: { data, lista }
         });
     };
     
@@ -543,6 +553,16 @@ class ServiceConexion {
             url: `${this.apiurl}/SaveFactura`,
             headers: { 'content-type': 'application/json' },
             data: { ...fac }
+        });
+    };
+
+    
+    savesituacionhabitacional = (sit) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSituacionHabitacional`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...sit }
         });
     };
 }
