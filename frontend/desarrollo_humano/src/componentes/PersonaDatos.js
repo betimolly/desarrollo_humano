@@ -7,9 +7,6 @@ import conn from '../ServiceConexion';
 class PersonaDatos extends React.Component {
 
     state = {
-        //id_barrio: '',
-        //barrio: '',
-        //barrio_obj: {id_barrio: '', barrio: ''},
         options_pers: [],
         options_barrios: [],
         paises: [],
@@ -54,36 +51,25 @@ class PersonaDatos extends React.Component {
     
     //Al seleccionar el barrio del listado desplegado
     handleChangeBarrios = (e, newValue, reason) => {
-        //this.setState( {id_barrio: newValue.clave, barrio: newValue.valor} );
-        
-        //const key = newValue.clave;
-        //const value = newValue.valor;
         const personaProp = {
             barrio: newValue.valor,
             id_barrio: newValue.clave
         };
-
         this.props.onChange(personaProp);
     };
 
     //Al tipear el nombre del barrio
     onChangeBarrios = (e,newValue, reason) => {
-        //this.setState({ barrio: newValue });
-         
-        //const key = "barrio";
-        //const value = newValue;
         if(e && e.type && e.type === 'change'){
             const personaProp = {
                 barrio: newValue
             };
-
             this.props.onChange(personaProp);             
         }     
     }
 
 
     searchPersona = (e, nrodoc, reason) => {
-        //this.setState({ndoc: nrodoc});
         if(e && e.type && e.type === 'change'){
             this.props.onChange({ndoc: nrodoc});
             
@@ -103,8 +89,6 @@ class PersonaDatos extends React.Component {
     } 
 
     autocompleteChangePersona = (e, newValue) => {
-        //this.setState({...newValue});
-
         this.props.onChange({...newValue});
 
         if ((newValue !== null) && this.props.onChangePersona) {
@@ -128,35 +112,6 @@ class PersonaDatos extends React.Component {
         }
         return (edad >= 0 ? edad : '');
     }
-
-    /*loadData = (id) => {
-        conn.searchexactperson(id).then( response => { 
-            if (response.data.length > 0) {
-                const data = response.data[0];
-                let edad = '';
-                let fecha_nacimiento = (data.fecha_nacimiento && data.fecha_nacimiento !== "0000-00-00") ? data.fecha_nacimiento : "";
-                if (fecha_nacimiento) {
-                    edad = this.calcEdad(data.fecha_nacimiento);
-                }
-                
-                this.setState( { options_pers: response.data,
-                                 id: data.id, 
-                                 nombre: data.nombre,
-                                 apellido: data.apellido,
-                                 ndoc: data.ndoc,
-                                 fecha_nacimiento: fecha_nacimiento,
-                                 edad: edad,
-                                 telefono: data.telefono,
-                                 email: data.email,
-                                 calle: data.calle,
-                                 altura: data.altura,
-                                 id_barrio: data.id_barrio,
-                                 barrio: data.barrio,
-                                 barrio_obj: {id_barrio: data.id_barrio, barrio: data.barrio},
-                                 nacionalidad: data.nacionalidad} );
-            }
-        });
-    } */
     
     componentDidMount() {
         conn.loadbarrios().then( response => { 
@@ -165,12 +120,6 @@ class PersonaDatos extends React.Component {
         conn.loadpaises().then( response => { 
             this.setState( { paises: response.data } );
         });
-
-        //Verifico si es una edición
-        /*if (this.props.id_pers) {
-            this.setState( { id: this.props.id_pers } );
-            this.loadData(this.props.id_pers);
-        }*/
     }
 
     handleChange = e => {
@@ -179,7 +128,6 @@ class PersonaDatos extends React.Component {
         const personaProp = {
             [key]: value
         };
-
         this.props.onChange(personaProp);
     };
 
@@ -209,7 +157,7 @@ class PersonaDatos extends React.Component {
                                         onChange={this.autocompleteChangePersona}
                                         getOptionLabel={option => option.ndoc ? option.ndoc.toString() : '' }
                                         renderInput={params => (
-                                            <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth  />)}
+                                            <TextField {...params} id="txtNdoc" name="ndoc" label="Nro. Documento" fullWidth inputProps={{ ...params.inputProps, maxLength: 8}} />)}
                                         options={this.state.options_pers} />
                                         <small className="labelleft">Ingrese al menos 4 caracteres para iniciar la búsqueda.</small>
                                 </React.Fragment>)
@@ -224,25 +172,29 @@ class PersonaDatos extends React.Component {
                             </TextField>
                         </Grid>
                         <Grid item sm={4} xs={12}>
-                            <TextField id="txtCuil" fullWidth name="cuil" label="CUIL" value={persona.cuil} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtCuil" fullWidth name="cuil" label="CUIL" value={persona.cuil} onChange={this.handleChange} inputProps={{maxLength:12}} ></TextField>
                         </Grid>
                         <Grid item sm={size} xs={12}>
-                            <TextField id="txtNombre" fullWidth name="nombre" label="Nombre" value={persona.nombre} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtNombre" fullWidth name="nombre" label="Nombre" value={persona.nombre} onChange={this.handleChange} inputProps={{maxLength:35}} ></TextField>
                         </Grid>
                         <Grid item sm={size} xs={12}>
-                            <TextField id="txtApellido" fullWidth name="apellido" label="Apellido" value={persona.apellido} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtApellido" fullWidth name="apellido" label="Apellido" value={persona.apellido} onChange={this.handleChange} inputProps={{maxLength:50}} ></TextField>
                         </Grid>
                         {
                             es_familiar && (
                                 <Grid item sm={size} xs={12}>
                                     <TextField id="ddlParentesco" select fullWidth name="parentesco" label="Parentesco" className="labelleft" value={persona.parentesco} onChange={this.handleChange} >
-                                        <MenuItem value="Hijos">Hijo</MenuItem>
-                                        <MenuItem value="Padres">Padres</MenuItem>
-                                        <MenuItem value="Esposos">Esposos</MenuItem>
-                                        <MenuItem value="Hermanos">Hermanos</MenuItem>
-                                        <MenuItem value="Abuelos">Abuelos</MenuItem>
-                                        <MenuItem value="Tíos">Tíos</MenuItem>
-                                        <MenuItem value="Primos">Primos</MenuItem>
+                                        <MenuItem value="Cónyuge/Pareja">Cónyuge/Pareja</MenuItem>
+                                        <MenuItem value="Hijo/a">Hijo/a</MenuItem>
+                                        <MenuItem value="Yerno/Nuera">Yerno/Nuera</MenuItem>
+                                        <MenuItem value="Nieto">Nieto</MenuItem>
+                                        <MenuItem value="Padre/madre">Padre/Madre</MenuItem>
+                                        <MenuItem value="Suegro/a">Suegro/a</MenuItem>
+                                        <MenuItem value="Abuelo/a">Abuelo/a</MenuItem>
+                                        <MenuItem value="Tío/a">Tío/a</MenuItem>
+                                        <MenuItem value="Primo/a">Primo/a</MenuItem>
+                                        <MenuItem value="Otros familiares">Otros familiares</MenuItem>
+                                        <MenuItem value="Otros No familiares">Otros no familiares</MenuItem>
                                     </TextField>
                                 </Grid>
                             )
@@ -254,16 +206,16 @@ class PersonaDatos extends React.Component {
                             <TextField id="txtEdad" fullWidth inputProps={{readOnly: true}} name="edad" label="Edad" value={edad} InputLabelProps={{ shrink: true }} ></TextField>
                         </Grid>
                         <Grid item sm={2} xs={12}>
-                            <TextField id="txtTelefono" fullWidth name="telefono" label="Teléfono" value={persona.telefono} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtTelefono" fullWidth name="telefono" label="Teléfono" value={persona.telefono} onChange={this.handleChange} inputProps={{maxLength:12}} ></TextField>
                         </Grid>
                         <Grid item sm={4} xs={12}>
-                            <TextField id="txtEmail" fullWidth name="email" label="Email" value={persona.email} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtEmail" fullWidth name="email" label="Email" value={persona.email} onChange={this.handleChange} inputProps={{maxLength:50}} ></TextField>
                         </Grid>
                         <Grid item sm={6} xs={12}>
-                            <TextField id="txtCalle" fullWidth name="calle" label="Calle" value={persona.calle} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtCalle" fullWidth name="calle" label="Calle" value={persona.calle} onChange={this.handleChange} inputProps={{maxLength:50}} ></TextField>
                         </Grid>
                         <Grid item sm={2} xs={12}>
-                            <TextField id="txtAltura" fullWidth name="altura" label="Altura" value={persona.altura} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtAltura" fullWidth name="altura" label="Altura" value={persona.altura} onChange={this.handleChange} inputProps={{maxLength:5}} ></TextField>
                         </Grid>
                         <Grid item sm={4} xs={12}>
                             <Autocomplete
@@ -284,13 +236,13 @@ class PersonaDatos extends React.Component {
                             </TextField>
                         </Grid>
                         <Grid item sm={3} xs={12}>
-                            <TextField id="txtTiempoResidencia" fullWidth name="tiempo_residencia" label="Tiempo Residencia" value={persona.tiempo_residencia} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtTiempoResidencia" fullWidth name="tiempo_residencia" label="Tiempo Residencia" value={persona.tiempo_residencia} onChange={this.handleChange} inputProps={{maxLength:30}} ></TextField>
                         </Grid>
                         <Grid item sm={3} xs={12}>
-                            <TextField id="txtEscolaridad" fullWidth name="escolaridad" label="Escolaridad" value={persona.escolaridad} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtEscolaridad" fullWidth name="escolaridad" label="Escolaridad" value={persona.escolaridad} onChange={this.handleChange} inputProps={{maxLength:30}} ></TextField>
                         </Grid>
                         <Grid item sm={3} xs={12}>
-                            <TextField id="txtSituacionSalud" fullWidth name="situacion_salud" label="Situación Salud" value={persona.situacion_salud} onChange={this.handleChange} ></TextField>
+                            <TextField id="txtSituacionSalud" fullWidth name="situacion_salud" label="Situación Salud" value={persona.situacion_salud} onChange={this.handleChange} inputProps={{maxLength:30}}  ></TextField>
                         </Grid>
                     </Grid>                    
                 </Grid>

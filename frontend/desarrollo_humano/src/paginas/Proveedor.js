@@ -114,13 +114,13 @@ class Proveedor extends React.Component {
                                 <Grid item sm={6} xs={12}>
                                     <TextField id="txtDomicilio" fullWidth name="domicilio" label="Domicilio" value={this.state.domicilio} onChange={e => this.setState({ domicilio: e.target.value })} ></TextField>                            
                                 </Grid> 
-                                <Grid item sm={6} xs={12}>
+                                <Grid item sm={4} xs={12}>
                                     <TextField id="txtTelefono" fullWidth name="telefono" label="Teléfono" value={this.state.telefono} onChange={e => this.setState({ telefono: e.target.value })} ></TextField> 
                                 </Grid>
-                                <Grid item sm={6} xs={12}>
+                                <Grid item sm={4} xs={12}>
                                     <TextField id="txtEmail" fullWidth name="email" label="Email" value={this.state.email} onChange={e => this.setState({ email: e.target.value })} ></TextField>                          
                                 </Grid> 
-                                <Grid item sm={6} xs={12}>
+                                <Grid item sm={4} xs={12}>
                                     <TextField select fullWidth
                                         label="Seleccione Localidad"
                                         id="ddlLocalidad"

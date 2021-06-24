@@ -242,7 +242,7 @@ class ArticuloDatos extends React.Component {
                             </FormControl>        
                         </Grid>
                         <Grid item sm={9} xs={12}>
-                            <TextField id="txtCodigoBarra" fullWidth name="codigo_barra" label="Código Barra" value={this.state.codigo_barra} onChange={e => this.setState({ codigo_barra: e.target.value })} ></TextField>
+                            <TextField id="txtCodigoBarra" fullWidth name="codigo_barra" label="Código Barra" value={this.state.codigo_barra} onChange={event => this.setState({codigo_barra: event.target.value.replace(/\D/,'')})} inputProps={{maxLength:50}} ></TextField>
                         </Grid>
                         <Grid item sm={6} xs={12}>
                             <TextField id="txtCantidadMaxima" fullWidth name="cantidad_maxima" label="Cantidad Máxima" value={this.state.cantidad_maxima} onChange={e => this.setState({ cantidad_maxima: e.target.value })} ></TextField>

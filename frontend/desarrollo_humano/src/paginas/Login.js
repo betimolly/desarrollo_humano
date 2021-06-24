@@ -20,7 +20,7 @@ class Login extends React.Component {
                                   }
                                   else {
                                       this.setState({loading:false});
-                                      setUserSession(response.data.token, response.data.user, response.data.userid, response.data.pages);
+                                      setUserSession(response.data.token, response.data.user, response.data.userid, response.data.rol, response.data.pages);
                                       const loggedIn = true;
                                       this.props.onLoggedIn(loggedIn);
                                   }

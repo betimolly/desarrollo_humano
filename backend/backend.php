@@ -66,7 +66,7 @@ class Backend {
         if ( count($rta)>0) {
 
             //Recupero los accesos permitidos por rol de usuario
-            $query2 = $this->conexion->prepare ("SELECT p.id, p.nombre, p.pagina, p.componente, p.icono, p.menu, p.padre, p.orden 
+            $query2 = $this->conexion->prepare ("SELECT p.id, p.nombre, p.pagina, p.componente, p.icono, p.menu, p.padre, p.orden, r.id as id_rol 
                                                 FROM seg_roles r left join seg_rol_paginas rp ON r.id=rp.rol LEFT JOIN seg_rol_usuarios u ON u.rol=r.id LEFT JOIN seg_paginas p 
                                                 ON p.id=rp.pagina
                                                 WHERE u.usuario=:id_u
@@ -91,7 +91,7 @@ class Backend {
                 //                            "icono" => $p["icono"], "menu" => $p["menu"], "padre" => $p["padre"]));
             }
 
-            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"], "pages" => $accesos ];
+            $response = [ "token" => sha1($u), "user" => $rta[0]["nombres"], "userid" => $rta[0]["usuario"], "rol" =>$resultado[0]["id_rol"], "pages" => $accesos ];
         }
         else {
             $response = [ "error" => "Usuario o contraseña incorrecto."];
@@ -121,7 +121,7 @@ class Backend {
         $nro = $this->data->nrodoc."%";
 
         $query = $this->conexion->prepare ("select id, ndoc, apellido, nombre, fecha_nacimiento, calle, altura, barrio as id_barrio, telefono, email, nacionalidad, baja, 
-                                            (SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio) AS barrio, tiempo_residencia, escolaridad, situacion_salud 
+                                            coalesce((SELECT denominacion_barrio FROM barrios WHERE cod_barrio=barrio), '') AS barrio, tiempo_residencia, escolaridad, situacion_salud 
                                             from personas where ndoc like ? ");
         $query->execute(array($nro));
         $rta = $query->fetchAll();
@@ -176,7 +176,7 @@ class Backend {
         $txt_search = $this->data->txt_search."%";
         $tipo = $this->data->pers_inst;
 
-        if ($tipo === "persona") {
+        if ($tipo === "P") {
             $sql = "SELECT id AS numero, concat('DNI ' , ndoc , ' - ' , upper(nombre) , ' ', upper(apellido)) AS descripcion FROM personas WHERE ndoc like ?";
         }
         else {
@@ -479,6 +479,33 @@ class Backend {
 
         return json_encode($response);
     }
+    
+
+    private function SearchDetalleBeneficiosInt($id) {
+        $query = $this->conexion->prepare(" SELECT p.id_percibe AS clave, t.nombre AS valor 
+                                            FROM acc_beneficiario_percibe p INNER JOIN acc_tabla_parametricas t ON t.id=p.id_percibe 
+                                            WHERE p.fecha_baja IS null AND t.tabla='BENEFICIOS' AND p.id_beneficiario=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+        return $response;
+    }
+
+
+    function SearchSituacionEconomica() {
+        $id = $this->data->id_ben;
+
+        $query = $this->conexion->prepare ("select * from acc_beneficiario_economico where id_beneficiario=? ");
+        $query->execute(array($id));
+        $response = [];
+
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = $this->SearchDetalleBeneficiosInt($id);
+            $row["lista_percibe"] = $detalle; 
+            $response[] = $row;
+        }
+
+        return json_encode($response);
+    }
 
 
     function SearchSituacionHabitacional() {
@@ -494,6 +521,117 @@ class Backend {
         else {
             $response = [ "error" => "No se encontraron datos."];
         }
+        return json_encode($response);
+    }
+
+
+    function SearchSituacionSalud() {
+        $id = $this->data->id_ben;
+
+        $query = $this->conexion->prepare ("select * from acc_beneficiario_salud where id_beneficiario=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchSituacionEducacional() {
+        $id = $this->data->id_ben;
+
+        $query = $this->conexion->prepare ("select * from acc_beneficiario_educacion where id_beneficiario=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchSituacionJudicial() {
+        $id = $this->data->id_ben;
+
+        $query = $this->conexion->prepare ("select * from acc_beneficiario_judicial where id_beneficiario=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+
+
+    function SearchSolicitud() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare ("SELECT s.*,
+                                            case when ISNULL(id_institucion) then id_beneficiario ELSE id_institucion END AS id_pers_inst,
+                                            case when ISNULL(id_institucion) then concat(p.nombre, ' ', p.apellido) ELSE i.institucion END AS descripcion
+                                            FROM acc_solicitud_beneficiario s LEFT JOIN acc_instituciones i ON i.id=s.id_institucion LEFT JOIN personas p ON p.id=s.id_beneficiario
+                                            WHERE s.id=? ");
+        $query->execute(array($id));
+        $rta = $query->fetchAll();
+
+        if ( count($rta) > 0) {
+            $response = $rta;
+        }
+        else {
+            $response = [ "error" => "No se encontraron datos."];
+        }
+        return json_encode($response);
+    }
+    
+
+    private function SearchDetalleRemitoBenefInt($id) {
+        $query = $this->conexion->prepare("SELECT r.id,
+                                                CONCAT(COALESCE(ru.nombre,''), ' ', COALESCE(sr.nombre,''), ' ',ar.descripcion, ' (', COALESCE(m.nombre,''), ')') AS articulo,
+                                                r.id_articulo_partida, r.cantidad_asignada, r.cantidad_entregada
+                                            FROM acc_remito_beneficiario_detalle r INNER JOIN acc_articulo_partida a ON r.id_articulo_partida=a.id LEFT JOIN acc_articulos ar ON a.id_articulo=ar.id
+                                            LEFT JOIN acc_rubros ru ON ar.id_rubro=ru.id LEFT JOIN acc_subrubros sr ON ar.id_subrubro=sr.id LEFT JOIN acc_marcas m ON ar.id_marca_articulo=m.id
+                                            WHERE r.id_remito=:id");
+        $query->execute(array(':id' => $id));   
+        $response = $query->fetchAll(); 
+        return $response;
+    }
+
+
+    function SearchRemitoBenef() {
+        $id = $this->data->id;
+
+        $query = $this->conexion->prepare ("SELECT r.id, COALESCE(r.id_solicitud,0) AS id_solicitud, r.fecha_emision, r.fecha_entrega, r.forma_entrega, r.observaciones, 
+                                            r.borrado, case when r.id_solicitud IS NOT null then ( 
+                                            SELECT CONCAT(id, ' - ',
+                                            case when id_institucion IS NOT NULL then (SELECT CONCAT(cuit, ' - ', institucion) FROM acc_instituciones WHERE id=s.id_institucion) 
+                                            when id_beneficiario IS NOT NULL then (SELECT CONCAT(ndoc, ' - ', nombre, ' ', apellido) FROM personas WHERE id=s.id_beneficiario) END) 
+                                            FROM acc_solicitud_beneficiario s
+                                            WHERE s.id=r.id_solicitud ) 
+                                            ELSE '' END AS solicitud, '' as detalleremito
+                                            FROM acc_remito_beneficiario r LEFT JOIN acc_solicitud_beneficiario s ON r.id_solicitud=s.id 
+                                            WHERE r.id=? ");
+        $query->execute(array($id));
+        $response = [];
+
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = $this->SearchDetalleRemitoBenefInt($id);
+            $row["detalleremito"] = $detalle; 
+            $response[] = $row;
+        }
+
         return json_encode($response);
     }
 
@@ -539,6 +677,14 @@ class Backend {
         return $this->LoadGenericData('ENVASE');
     }
 
+    function LoadBeneficios() {
+        return $this->LoadGenericData('BENEFICIOS');
+    }
+
+    function LoadEfectores() {
+        return $this->LoadGenericData('EFECTORES');
+    }
+
     function LoadLocalidades() {
         $query = $this->conexion->prepare ("SELECT id as clave, denominacion as valor FROM localidades");
         $query->execute();
@@ -581,21 +727,19 @@ class Backend {
         return json_encode($response);
     }
 
+    function LoadSolicitudes() {
+        $query = $this->conexion->prepare ("SELECT id AS id_solicitud, CONCAT(id, ' - ',
+                                            case when id_institucion IS NOT NULL then (SELECT CONCAT(cuit, ' - ', institucion) FROM acc_instituciones WHERE id=s.id_institucion) 
+                                            when id_beneficiario IS NOT NULL then (SELECT CONCAT(ndoc, ' - ', nombre, ' ', apellido) FROM personas WHERE id=s.id_beneficiario) END) AS solicitud
+                                            FROM acc_solicitud_beneficiario s 
+                                            WHERE estado = 2");
+        $query->execute();
+        $response = $query->fetchAll();
+        return json_encode($response);
+    }
+
 
     function ListaBeneficiarios() {
-        /*$query = $this->conexion->prepare("SELECT 
-                                                id, id_persona, 
-                                                case when id_persona IS not NULL then (SELECT p.ndoc FROM personas p WHERE p.id=id_persona)
-                                                    when id_institucion IS NOT NULL then (SELECT i.cuit FROM acc_instituciones i WHERE i.id=id_institucion)
-                                                END  AS numero, 
-                                                case when id_persona IS NOT NULL then 'persona' ELSE 'institucion' END AS tipo,
-                                                case when id_persona IS not NULL then (SELECT CONCAT(p.nombre, ' ', p.apellido) FROM personas p WHERE p.id=id_persona)
-                                                    when id_institucion IS NOT NULL then (SELECT i.institucion FROM acc_instituciones i WHERE i.id=id_institucion)
-                                                END  AS nombre,
-                                                DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta,
-                                                case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
-                                                observaciones, '' as familiares
-                                            FROM acc_beneficiarios");*/
         $query = $this->conexion->prepare("SELECT b.id, b.id_persona, ndoc, CONCAT(nombre, ' ', apellido) AS nombre,
                                            DATE_FORMAT(fecha_alta,'%d-%m-%Y') AS fecha_alta, formacion, situacion_laboral,
                                            case when activo = 'S' then 'Si' ELSE 'No' end AS activo, 
@@ -753,6 +897,43 @@ class Backend {
         $response = $query->fetchAll(); 
         return json_encode($response);  
     }
+
+
+    function ListaSolicitudes() {
+        $rol = $this->data->rol;
+        $where = "";
+        if ($rol === "2") {
+            $where = "WHERE estado in (1,2)";
+        }
+        if ($rol === "3") {
+            $where = "WHERE estado in (2,3)";
+        } 
+        $query = $this->conexion->prepare("SELECT s.id, DATE_FORMAT(s.fecha_emision,'%d-%m-%Y') AS fecha_emision, s.es_persona_institucion, s.tipo_beneficio, 
+                                           case when s.estado='1' then 'Solicitada' when s.estado='2' then 'Aprobada' when s.estado='3' then 'Entregada' end as estado,
+                                           s.observaciones, s.id_remito, s.borrado, s.fecha_baja,  s.efector, tp.nombre,
+                                           case when es_persona_institucion='P' then 'Persona' ELSE 'Institución' END AS es_pers_inst, 
+                                           case when ISNULL(id_institucion) then id_beneficiario ELSE id_institucion END AS id_pers_inst,
+                                           case when ISNULL(id_institucion) then p.ndoc ELSE i.cuit END AS documento, 
+                                           case when ISNULL(id_institucion) then concat(p.nombre, ' ', p.apellido) ELSE i.institucion END AS descripcion
+                                           FROM acc_solicitud_beneficiario s LEFT JOIN acc_instituciones i ON i.id=s.id_institucion LEFT JOIN personas p ON 
+                                           p.id=s.id_beneficiario LEFT JOIN acc_tabla_parametricas tp ON tp.id=s.efector
+                                           $where
+                                           ORDER BY tp.nombre");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
+
+
+    function ListaRemitosBeneficiarios() {
+        $query = $this->conexion->prepare("SELECT id, id_solicitud, fecha_emision, fecha_entrega, observaciones, 
+                                           case when borrado='N' then 'No' ELSE 'Si' END AS borrado,
+                                           case when forma_entrega=1 then 'Mesa de Entrada' ELSE 'Reparto' END AS forma_entrega
+                                           FROM acc_remito_beneficiario");
+        $query->execute();  
+        $response = $query->fetchAll(); 
+        return json_encode($response);  
+    }
     
 
     function DeleteBeneficiarios() {
@@ -833,6 +1014,27 @@ class Backend {
     }
     
 
+    function DeleteSolicitud() {
+        $ids = implode(',', $this->data->data); 
+        //$in  = str_repeat('?,', count($this->data->data) - 1) . '?';
+        //$sql = sprintf("UPDATE acc_solicitud_beneficiario set borrado='S', fecha_baja=CURRENT_TIMESTAMP WHERE `id` in (%s)", $ids); 
+        //$query = $this->conexion->prepare("UPDATE acc_solicitud_beneficiario set borrado='S', fecha_baja=CURRENT_TIMESTAMP WHERE `id` in ($in)");
+        $query = $this->conexion->exec("UPDATE acc_solicitud_beneficiario set borrado='S', fecha_baja=CURRENT_TIMESTAMP WHERE `id` in ($ids)");
+        //$query->execute($this->data->data);   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
+    function DeleteRemitoBeneficiario() {
+        $ids = implode(',', $this->data->data); 
+        $query = $this->conexion->prepare("UPDATE acc_remito_beneficiario set borrado='S', fecha_baja=NOW() WHERE id in ($ids)");
+        $query->execute();   
+        $response = "Exito";
+        return json_encode($response);                              
+    }
+    
+
     function UploadFileServer() {
         $id = $this->data->id; 
         $name = $this->data->name; 
@@ -905,7 +1107,6 @@ class Backend {
         $escol = $this->data->escolaridad;
         $salud = $this->data->situacion_salud;
         $titular = $this->data->titular;
-        //$es_fliar = $this->data->titular;
 
         try {
             if ($id == 0) {
@@ -914,25 +1115,17 @@ class Backend {
                                                     values (:id, 'DNI', :ndoc, :sexo, :cuil, :apellido, :nombre, :fecha_nacimiento, :calle, :altura, :barrio, 2974, 62, :telefono, :email, 
                                                     :nacionalidad, :tiempo, :escolaridad, :salud)");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':sexo' => $sexo, ':cuil' => $cuil, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, 
-                                    ':calle' => $calle, ':altura' => $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, 
-                                    ':escolaridad'=>$escol, ':salud'=>$salud));
+                                    ':calle' => $calle, ':altura' => $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi,
+                                    ':escolaridad' => $escol, ':salud' => $salud ));
                 $id = $this->conexion->lastInsertId();
-/*
-                if ($ben == 0) {
-                    $query = $this->conexion->prepare ("insert into acc_beneficiarios(id, id_persona) values (NULL, :id)");
-                    $query->execute(array(':id' => $id));
-                    $ben = $this->conexion->lastInsertId();
-                }
-
-                $response = array("id" => $id, "ben" => $ben);*/
             }
             else {
                 $valores = "ndoc=:ndoc, sexo=:sexo, cuil=:cuil, apellido=:apellido, nombre=:nombre, fecha_nacimiento=:fecha_nacimiento, calle=:calle, altura=:altura, barrio=:barrio, 
                             telefono=:telefono, email=:email, nacionalidad=:nacionalidad, tiempo_residencia=:tiempo, escolaridad=:escolaridad, situacion_salud=:salud";
                 $query = $this->conexion->prepare ("update personas set $valores where id=:id");
                 $query->execute(array(':id' => $id, ':ndoc' => $ndoc, ':sexo' => $sexo, ':cuil' => $cuil, ':apellido' => $ape, ':nombre' => $nom, ':fecha_nacimiento' => $fec_nac, ':calle' => $calle, 
-                                    ':altura'=> $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad'=>$escol, ':salud'=>$salud));
-                //$response =  array("id" => $id, "ben" => $ben);                    
+                                    ':altura'=> $altura, ':barrio' => $barrio, ':telefono' => $tel, ':email' => $email, ':nacionalidad' => $nac, ':tiempo'=>$resi, ':escolaridad' => $escol, 
+                                    ':salud' => $salud));                   
             }
 
             if (($ben == 0) && $titular) {
@@ -1022,7 +1215,7 @@ class Backend {
     }
 
 
-    function SaveBeneficiario() { 
+    /*function SaveBeneficiario() { 
         $id = $this->data->id;
         $pers_inst = $this->data->es_persona_institucion;
         $id_pers_inst = $this->data->id_pers_inst;
@@ -1070,7 +1263,7 @@ class Backend {
             $response = [ "error" => "Error al registrar los datos.".$e];
         }
         return json_encode($response);
-    }
+    }*/
 
 
     function SaveArticulo() { 
@@ -1268,10 +1461,91 @@ class Backend {
     }
 
 
+    function SaveSituacionEconomica() { 
+        $id = $this->data->id;
+        $id_ben = $this->data->id_beneficiario;
+        $tit_trab = $this->data->titular_trabaja ? "S" : "N";
+        $activ = $this->data->actividad;
+        $formal = $this->data->formal ? "S" : "N";
+        $ing_fijo = $this->data->ingreso_fijo ? "S" : "N";
+        $fliar_trab = $this->data->familiar_trabaja ? "S" : "N";
+        $activ_fliar = $this->data->actividad_familiar;
+        $formal_fliar = $this->data->formal_familiar ? "S" : "N";
+        $ing_fijo_fliar = $this->data->ingreso_fijo_familiar ? "S" : "N";
+        $percibe_alim = $this->data->percibe_alimentos_estado ? "S" : "N";
+        $retira_alim = $this->data->retira_alimentos ? "S" : "N";
+        $percibe_alim_soc = $this->data->percibe_alimentos_soc ? "S" : "N";
+        $alim_menores = $this->data->alimentacion_menores ? "S" : "N";
+        $lista_percibe = $this->data->lista_percibe;
+
+        try {
+            if ($id == "0") {
+                $query = $this->conexion->prepare ("insert into acc_beneficiario_economico values (NULL, :id_ben, :tit_trab, :activ, :formal, :ing_fijo, :fliar_trab, 
+                                                    :activ_fliar, :formal_fliar, :ing_fijo_fliar, :percibe_alim, :retira_alim, :percibe_alim_soc, :alim_menores )");
+                $query->execute(array(':id_ben' => $id_ben, ':tit_trab' => $tit_trab, ':activ' => $activ, ':formal' => $formal, ':ing_fijo' => $ing_fijo, ':fliar_trab' => $fliar_trab, 
+                                      ':activ_fliar' => $activ_fliar, ':formal_fliar' => $formal_fliar, ':ing_fijo_fliar' => $ing_fijo_fliar, ':percibe_alim' => $percibe_alim, 
+                                      ':retira_alim' => $retira_alim, ':percibe_alim_soc' => $percibe_alim_soc, ':alim_menores' => $alim_menores));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_beneficiario_economico set titular_trabaja=:tit_trab, actividad=:activ, formal=:formal, ingreso_fijo=:ing_fijo,  
+                                                    familiar_trabaja=:fliar_trab, actividad_familiar=:activ_fliar, formal_familiar=:formal_fliar, ingreso_fijo_familiar=:ing_fijo_fliar,  
+                                                    percibe_alimentos_estado=:percibe_alim, retira_alimentos=:retira_alim, percibe_alimentos_soc=:percibe_alim_soc, 
+                                                    alimentacion_menores=:alim_menores 
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':tit_trab' => $tit_trab, ':activ' => $activ, ':formal' => $formal, ':ing_fijo' => $ing_fijo, ':fliar_trab' => $fliar_trab, 
+                                      ':activ_fliar' => $activ_fliar, ':formal_fliar' => $formal_fliar, ':ing_fijo_fliar' => $ing_fijo_fliar, ':percibe_alim' => $percibe_alim, 
+                                      ':retira_alim' => $retira_alim, ':percibe_alim_soc' => $percibe_alim_soc, ':alim_menores' => $alim_menores));
+            }
+
+            //Busco los beneficios que percibe el beneficiario y actualizo
+            $q = $this->conexion->prepare(" SELECT p.id_percibe as clave, t.nombre as valor  
+                                            FROM acc_beneficiario_percibe p INNER JOIN acc_tabla_parametricas t ON t.id=p.id_percibe 
+                                            WHERE t.tabla='BENEFICIOS' AND p.fecha_baja IS null AND p.id_beneficiario=:id");
+            $q->execute(array(':id' => $id_ben));   
+            $lista_bd = $q->fetchAll(); 
+
+            //Inserto los nuevos beneficios
+            foreach($lista_percibe as $elem) {
+                $esta = false;
+                foreach($lista_bd as $e) {
+                    if ( $e["clave"] === $elem->clave ) {
+                        $esta = true;
+                    }
+                }
+                if (!$esta) {                    
+                    $sql = $this->conexion->prepare("insert into acc_beneficiario_percibe values (null, :id_benef, :id, NOW(), null)");
+                    $sql->execute(array(':id_benef' => $id_ben, ':id' => $elem->clave));
+                }
+            }
+            //Se da de baja los beneficios borrados
+            foreach($lista_bd as $elem) {
+                $esta = false;
+                foreach($lista_percibe as $e) {
+                    if ( $e->clave === $elem["clave"] ) {
+                        $esta = true;
+                    }
+                }
+                if (!$esta) {                    
+                    $sql = $this->conexion->prepare("update acc_beneficiario_percibe set fecha_baja=NOW() where id_percibe=:id and id_beneficiario=:id_benef and fecha_baja is null");
+                    $sql->execute(array(':id_benef' => $id_ben, ':id' => $elem["clave"]));
+                }
+            }
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
     function SaveSituacionHabitacional() { 
         $id = $this->data->id;
         $id_benef = $this->data->id_beneficiario;
-        $sit_calle = $this->data->situacion_calle ? "S" : "N";;
+        $sit_calle = $this->data->situacion_calle ? "S" : "N";
         $viv_ant = $this->data->vivienda_anterior;
         $conv_ant = $this->data->conviviente_anterior;
         $proy_sit = $this->data->proyeccion_situacion;
@@ -1279,22 +1553,22 @@ class Backend {
         $tipo_viv = $this->data->tipo_vivienda;
         $prop = $this->data->propiedad;
         $comp_viv = $this->data->comparte_vivienda;
-        $luz = $this->data->luz ? "S" : "N";;
-        $gas = $this->data->gas ? "S" : "N";;
-        $cloaca = $this->data->cloacas ? "S" : "N";;
-        $agua = $this->data->agua_corriente ? "S" : "N";;
-        $residuo = $this->data->recoleccion_residuos ? "S" : "N";;
-        $cole = $this->data->servicio_colectivo ? "S" : "N";;
+        $luz = $this->data->luz ? "S" : "N";
+        $gas = $this->data->gas ? "S" : "N";
+        $cloaca = $this->data->cloacas ? "S" : "N";
+        $agua = $this->data->agua_corriente ? "S" : "N";
+        $residuo = $this->data->recoleccion_residuos ? "S" : "N";
+        $cole = $this->data->servicio_colectivo ? "S" : "N";
         $cant_dorm = $this->data->cantidad_dormitorios;
         $piso = $this->data->material_piso;
         $pared = $this->data->material_pared;
         $techo = $this->data->material_techo;
         $banio = $this->data->banio;
         $tipo_banio = $this->data->tipo_banio;
-        $agua_viv = $this->data->agua_en_vivienda ? "S" : "N";;
-        $tanque = $this->data->tanque_agua ? "S" : "N";;
-        $pilar = $this->data->pilar_luz ? "S" : "N";;
-        $conex = $this->data->conexion_electrica ? "S" : "N";;
+        $agua_viv = $this->data->agua_en_vivienda ? "S" : "N";
+        $tanque = $this->data->tanque_agua ? "S" : "N";
+        $pilar = $this->data->pilar_luz ? "S" : "N";
+        $conex = $this->data->conexion_electrica ? "S" : "N";
         $calef = $this->data->tipo_calefaccion;
         $alimento = $this->data->coccion_alimentos;
         $mejora_viv = $this->data->mejora_vivienda;
@@ -1325,6 +1599,211 @@ class Backend {
                                         ':conex' => $conex, ':calef' => $calef, ':alimen' => $alimento, ':mejora' => $mejora_viv));
             }
 
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveSituacionSalud() { 
+        $id = $this->data->id;
+        $id_benef = $this->data->id_beneficiario;
+        $enferm = $this->data->enfermedad;
+        $lugar = $this->data->lugar_tratamiento;
+        $enferm_fliar = $this->data->enfermedad_familiar;
+        $lugar_fliar = $this->data->lugar_tratamiento_familiar;
+        $discapac = $this->data->familiar_discapacitado ? "S" : "N";
+        $certif = $this->data->posee_certificado ? "S" : "N";
+        $ob_soc = $this->data->obra_social;
+        $medicacion = $this->data->medicacion;
+        $medico = $this->data->medico;
+        $pase = $this->data->posee_pase_transporte ? "S" : "N";
+        $referente = $this->data->referente;
+
+        try {
+            if ($id == "0") {
+                $query = $this->conexion->prepare ("insert into acc_beneficiario_salud values (NULL, :id_ben, :enferm, :lugar, :enferm_fliar, :lugar_fliar, 
+                                                    :discapac, :certif, :ob_soc, :medicacion, :medico, :pase, :referente )");
+                $query->execute(array(':id_ben' => $id_benef, ':enferm' => $enferm, ':lugar' => $lugar, ':enferm_fliar' => $enferm_fliar, ':lugar_fliar' => $lugar_fliar,
+                                      ':discapac' => $discapac, ':certif' => $certif, ':ob_soc' => $ob_soc, ':medicacion' => $medicacion, ':medico' => $medico, 
+                                      ':pase' => $pase, ':referente' => $referente ));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_beneficiario_salud set enfermedad=:enferm, lugar_tratamiento=:lugar, enfermedad_familiar=:enferm_fliar, 
+                                                    lugar_tratamiento_familiar=:lugar_fliar, familiar_discapacitado=:discapac, posee_certificado=:certif, 
+                                                    obra_social=:ob_soc, medicacion=:medicacion, medico=:medico, posee_pase_transporte=:pase, referente=:referente
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':enferm' => $enferm, ':lugar' => $lugar, ':enferm_fliar' => $enferm_fliar, ':lugar_fliar' => $lugar_fliar,
+                                        ':discapac' => $discapac, ':certif' => $certif, ':ob_soc' => $ob_soc, ':medicacion' => $medicacion, ':medico' => $medico, 
+                                        ':pase' => $pase, ':referente' => $referente ));
+            }
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveSituacionEducacion() { 
+        $id = $this->data->id;
+        $id_benef = $this->data->id_beneficiario;
+        $cant = $this->data->cantidad_escolarizado;
+        $ult = $this->data->ultimo_nivel_escolarizado;
+        $establec = $this->data->establecimiento_educativo;
+        $concurre = $this->data->concurren_centro_municipal ? "S" : "N";
+        $apoyo = $this->data->apoyo_pedagogico ? "S" : "N";
+        $etap = $this->data->etap;
+        $activ = $this->data->actividad_familiar;
+        $instit = $this->data->institucion_concurre;
+
+        try {
+            if ($id == "0") {
+                $query = $this->conexion->prepare ("insert into acc_beneficiario_educacion values (NULL, :id_ben, :cant, :ult, :establec, :concurre, :apoyo, :etap, :activ, :instit)");
+                $query->execute(array(':id_ben' => $id_benef, ':cant' => $cant, ':ult' => $ult, ':establec' => $establec, ':concurre' => $concurre, ':apoyo' => $apoyo, ':etap' => $etap, 
+                                      ':activ' => $activ, ':instit' => $instit ));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_beneficiario_educacion set cantidad_escolarizado=:cant, ultimo_nivel_escolarizado=:ult, establecimiento_educativo=:establec, 
+                                                    concurren_centro_municipal=:concurre, apoyo_pedagogico=:apoyo, etap=:etap, actividad_familiar=:activ, institucion_concurre=:instit
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':cant' => $cant, ':ult' => $ult, ':establec' => $establec, ':concurre' => $concurre, ':apoyo' => $apoyo, ':etap' => $etap, 
+                                      ':activ' => $activ, ':instit' => $instit ));
+            }
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveSituacionjudicial() { 
+        $id = $this->data->id;
+        $id_benef = $this->data->id_beneficiario;
+        $proceso = $this->data->proceso_judicial ? "S" : "N";
+        $ambito = $this->data->ambito_proceso_judicial;
+        $prof = $this->data->profesional_interviniente;
+        $instit = $this->data->institucion_concurre;
+
+        try {
+            if ($id == "0") {
+                $query = $this->conexion->prepare ("insert into acc_beneficiario_judicial values (NULL, :id_ben, :proceso, :ambito, :prof, :instit)");
+                $query->execute(array(':id_ben' => $id_benef, ':proceso' => $proceso, ':ambito' => $ambito, ':prof' => $prof, ':instit' => $instit ));
+                $id = $this->conexion->lastInsertId();                      
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_beneficiario_judicial set proceso_judicial=:proceso, ambito_proceso_judicial=:ambito, 
+                                                    profesional_interviniente=:prof, institucion_concurre=:instit
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':proceso' => $proceso, ':ambito' => $ambito, ':prof' => $prof, ':instit' => $instit));
+            }
+
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveObservacionBenef() { 
+        $id = $this->data->id;
+        $obs = $this->data->obs;
+
+        try {
+            $query = $this->conexion->prepare ("update acc_beneficiarios set observaciones=:obs where id=:id");
+            $query->execute(array(':id' => $id, ':obs' => $obs));
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveSolicitudBenef() { 
+        $id = $this->data->id; 
+        $es_per_inst = $this->data->es_persona_institucion;
+        $id_per_inst = $this->data->id_pers_inst;
+        $tipo = $this->data->tipo_beneficio;
+        $remito = $this->data->id_remito;
+        $estado = $this->data->estado; 
+        $obs = $this->data->observaciones;
+        $efec = $this->data->efector;
+        $user = $this->data->usuario;
+
+        try {
+            //Verifico si es persona o institución
+            if ($es_per_inst == "P") {
+                $persona = $id_per_inst;
+                $institucion = NULL;
+            }
+            else {
+                $persona = NULL;
+                $institucion = $id_per_inst;
+            }
+
+            if ($id == 0) { 
+                $query = $this->conexion->prepare ("insert into acc_solicitud_beneficiario values (NULL, CURRENT_DATE(), :es_p_i, :inst, :pers, :tipo, '1', :obs, :ef,NULL, :usu, 'N', NULL)");
+                $query->execute(array(':es_p_i' => $es_per_inst, ':inst' => $institucion, ':pers' => $persona, ':tipo' => $tipo, ':obs' => $obs, ':ef' => $efec, ':usu' => $user));
+                $id = $this->conexion->lastInsertId();
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_solicitud_beneficiario set es_persona_institucion=:es_p_i, id_institucion=:inst, id_beneficiario=:pers, 
+                                                    tipo_beneficio=:tipo, estado=:estado, observaciones=:obs, id_remito=:remito, efector=:ef, usuario=:usu
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':es_p_i' => $es_per_inst, ':inst' => $institucion, ':pers' => $persona, ':tipo' => $tipo, ':estado' => $estado,
+                                      ':obs' => $obs, ':remito' => $remito, ':ef' => $efec, ':usu' => $user));
+            }
+            $response = array("id" => $id); 
+        }
+        catch(Exception $e) {
+            $response = [ "error" => "Error al registrar los datos."];
+            $this->LogError($e);
+        }
+        return json_encode($response);
+    }
+
+
+    function SaveRemitoBenef() { 
+        $id = $this->data->id; 
+        $fecha_emision = $this->data->fecha_emision;
+        $fecha_entrega = $this->data->fecha_entrega;
+        $forma_entrega = $this->data->forma_entrega; 
+        $obs = $this->data->observaciones;
+        $id_solicitud = $this->data->id_solicitud;
+        $user = $this->data->usuario;
+        
+        try {
+            if ($id == 0) { 
+                $query = $this->conexion->prepare ("insert into acc_remito_beneficiario values (NULL, :id_sol, :fecha_emi, :fecha_entr, :forma, :obs, :usu, 'N', NULL, CURRENT_TIMESTAMP())");
+                $query->execute(array(':id_sol' => $id_solicitud, ':fecha_emi' => $fecha_emision, ':fecha_entr' => $fecha_entrega, ':forma' => $forma_entrega, ':obs' => $obs, ':usu' => $user));
+                $id = $this->conexion->lastInsertId();
+            }
+            else {
+                $query = $this->conexion->prepare ("update acc_remito_beneficiario set fecha_emision=:fecha_emision, fecha_entrega=:fecha_entrega, forma_entrega=:forma_entrega, 
+                                                    id_solicitud=:id_solicitud, observaciones=:obs
+                                                    where id=:id");
+                $query->execute(array(':id' => $id, ':fecha_emision' => $fecha_emision, ':fecha_entrega' => $fecha_entrega, ':forma_entrega' => $forma_entrega, ':obs' => $obs, 
+                                      ':id_solicitud' => $id_solicitud));
+            }
             $response = array("id" => $id); 
         }
         catch(Exception $e) {

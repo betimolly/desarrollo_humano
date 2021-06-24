@@ -26,6 +26,10 @@ import ListaOrdenesCompras from './paginas/ListaOrdenesCompras';
 import OrdenCompra from './paginas/OrdenCompra';
 import ListaFacturasProveedores from './paginas/ListaFacturasProveedores';
 import FacturaProveedor from './paginas/FacturaProveedor';
+import SolicitudEntregaMercaderia from './paginas/SolicitudEntregaMercaderia';
+import ListaSolicitudes from './paginas/ListaSolicitudes';
+import ListaRemitosBeneficiarios from './paginas/ListaRemitosBeneficiarios';
+import RemitoBeneficiario from './paginas/RemitoBeneficiario';
 
 
 class App extends React.Component{
@@ -118,7 +122,10 @@ class App extends React.Component{
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_orden_compra/:oc?" component={OrdenCompra} />
                                     <PrivateRoute exact path="/desarrollo_humano/lista_facturas_proveedores" component={ListaFacturasProveedores} />
                                     <PrivateRoute exact path="/desarrollo_humano/agregar_factura/:fac?" component={FacturaProveedor} />
-                                
+                                    <PrivateRoute exact path="/desarrollo_humano/lista_solicitudes" component={ListaSolicitudes} />
+                                    <PrivateRoute exact path="/desarrollo_humano/solicitud_entrega/:id?" component={SolicitudEntregaMercaderia} />
+                                    <PrivateRoute exact path="/desarrollo_humano/lista_remito_beneficio" component={ListaRemitosBeneficiarios} />
+                                    <PrivateRoute exact path="/desarrollo_humano/remito_beneficiario/:id?" component={RemitoBeneficiario} />
                                 </Switch>
                             </div>
                         </div>

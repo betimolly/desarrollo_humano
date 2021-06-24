@@ -1,35 +1,122 @@
 import React from "react";
-import { Tabs, Tab , AppBar, Card, CardContent } from '@material-ui/core';
-import TabPanel from '../componentes/TabPanel';
+import { Button, Grid, Card, CardContent } from '@material-ui/core';
 import PersonaDatos from "../componentes/PersonaDatos";
-import Listafamiliares from "../paginas/ListaFamiliares";
+import ModalConfirmacion from "../componentes/ModalConfirmacion";
 import conn from '../ServiceConexion';
+import { getCuilCuit } from '../utils/Commons';
 
 class Persona extends React.Component {
     state = {
-        id_pers: 0,
-        data_familiares: [],
-        tab_selected: 0
+        persona: {
+            id: 0,
+            beneficiario: 0,
+            nombre: '',
+            apellido: '',
+            ndoc: '',
+            sexo: '',
+            cuil: '',
+            fecha_nacimiento: '',
+            parentesco: '',
+            edad: '',
+            telefono: '',
+            email: '',
+            calle: '',
+            altura: '',
+            id_barrio: '',
+            barrio: '',
+            nacionalidad: '',
+            tiempo_residencia: '',
+            escolaridad: '',
+            situacion_salud: '',
+            titular: false
+        },
+        open: false,
+        dialog_title: '', 
+        dialog_content: ''
     };
 
-    handleTab = (e, newval) => {
-        this.setState ({tab_selected: newval});
+    handleClickOpen = () => {
+        this.setState( { open: true} );
+    };
+    
+    handleClose = () => {
+        this.setState( { open: false} );
+    };
+    
+
+    handleChangePersona = personaProp => {
+        const { persona } = this.state;
+        
+        const newpersona = {
+            ...persona, 
+            ...personaProp
+        };
+
+        //Si no se modifica el cuil, lo calculo
+        if ( !personaProp.cuil ) {
+            if (newpersona.ndoc && newpersona.sexo && (newpersona.cuil === "" || !newpersona.cuil)) {
+                newpersona.cuil =  getCuilCuit(newpersona.ndoc, newpersona.sexo);
+            }
+        }
+
+        //Si modifican el sexo, se calcula el cuil nuevamente
+        if ( personaProp.sexo ) {
+            if (newpersona.ndoc && newpersona.sexo) {
+                newpersona.cuil =  getCuilCuit(newpersona.ndoc, newpersona.sexo);
+            }
+        }
+
+        this.setState({persona: newpersona});
+    }
+
+    handleFormSubmit = () => {
+        conn.savepersona(this.state.persona).then( response => {
+            if (response.data.error) {
+                this.setState({error : response.data.error, dialog_title : "Error", dialog_content : "Error al guardar o actualizar los datos.", open: true});
+            }
+            else { 
+                this.setState({
+                    dialog_title : "Confirmación", 
+                    dialog_content : "Los datos se han guardado o actualizado correctamente.", 
+                    open: true,
+                    persona: {
+                        id: 0,
+                        beneficiario: 0,
+                        nombre: '',
+                        apellido: '',
+                        ndoc: '',
+                        sexo: '',
+                        cuil: '',
+                        fecha_nacimiento: '',
+                        parentesco: '',
+                        edad: '',
+                        telefono: '',
+                        email: '',
+                        calle: '',
+                        altura: '',
+                        id_barrio: '',
+                        barrio: '',
+                        nacionalidad: '',
+                        tiempo_residencia: '',
+                        escolaridad: '',
+                        situacion_salud: '',
+                        titular: false
+                    }
+                });
+            }
+         })
+        .catch( error => { console.error(error) } );
     };
 
-    handleChangePersona = (id) => {
-        this.loadData(id);
-    };
 
-    loadData = async (id) => {
-        let result = await conn.listafamiliares(id);
-        this.setState( { data_familiares: result.data } );
-    };
-
-    async componentDidMount() {
-        const id_pers = this.props.match.params.pers;
+    componentDidMount() {
         if (this.props.match.params.pers) {
-            this.setState({ id_pers: id_pers });
-            await this.loadData(id_pers);
+            conn.searchexactpersona(this.props.match.params.pers).then( response => {
+                if (response.data.length > 0) {
+                    const data = response.data[0];
+                    this.setState({ persona: {...data} })
+                }
+            });
         }
     }
 
@@ -38,23 +125,15 @@ class Persona extends React.Component {
             <div className="App" >
                 <Card className="Card" >
                     <CardContent>
-                        <AppBar position="static" color="transparent">
-                            <Tabs
-                                value={this.state.tab_selected}
-                                indicatorColor="primary"
-                                textColor="primary"
-                                onChange={this.handleTab}
-                            >
-                                <Tab label="Persona" ></Tab>
-                                <Tab label="Familiares" ></Tab>
-                            </Tabs>
-                        </AppBar>
-                        <TabPanel value={this.state.tab_selected} index={0} >
-                            <PersonaDatos titulo="Persona" id_pers={this.state.id_pers} onChangePersona={this.handleChangePersona} />
-                        </TabPanel>
-                        <TabPanel value={this.state.tab_selected} index={1} >
-                            <Listafamiliares titulo="Listado Familiares" data_familiares={this.state.data_familiares} />
-                        </TabPanel>
+                        <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} dialog_title={this.state.dialog_title} dialog_content={this.state.dialog_content} />
+                        <Grid container spacing={3} >
+                            <Grid item container justify="flex-start" xs={12}>
+                                <PersonaDatos titulo="Persona" persona={this.state.persona} es_edicion={ false } onChange={this.handleChangePersona} />
+                            </Grid>
+                            <Grid item container justify="flex-start" xs={12}>
+                                <Button variant="contained" color="primary" onClick={e => this.handleFormSubmit(e)} >Guardar</Button>
+                            </Grid>
+                        </Grid>
                     </CardContent>                    
                 </Card>
             </div>

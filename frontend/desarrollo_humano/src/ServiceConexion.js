@@ -153,12 +153,72 @@ class ServiceConexion {
     };
     
 
+    searchsituacioneconomica = (id_ben) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSituacionEconomica`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_ben }
+        });
+    };
+    
+
     searchsituacionhabitacional = (id_ben) => {
         return axios({
             method: 'post',
             url: `${this.apiurl}/SearchSituacionHabitacional`,
             headers: { 'content-type': 'application/json' },
             data: { id_ben }
+        });
+    };
+    
+
+    searchsituacionsalud = (id_ben) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSituacionSalud`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_ben }
+        });
+    };
+    
+
+    searchsituacioneducacional = (id_ben) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSituacionEducacional`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_ben }
+        });
+    };
+    
+
+    searchsituacionjudicial = (id_ben) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSituacionJudicial`,
+            headers: { 'content-type': 'application/json' },
+            data: { id_ben }
+        });
+    };
+    
+
+    searchsolicitud = (id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchSolicitud`,
+            headers: { 'content-type': 'application/json' },
+            data: { id }
+        });
+    };
+    
+
+    searchremitobenef = (id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SearchRemitoBenef`,
+            headers: { 'content-type': 'application/json' },
+            data: { id }
         });
     };
     
@@ -218,6 +278,15 @@ class ServiceConexion {
     };
     
         
+    loadbeneficios = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/LoadBeneficios`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
     loadlocalidades = () => {
         return axios({
             method: 'post',
@@ -269,6 +338,24 @@ class ServiceConexion {
         return axios({
             method: 'post',
             url: `${this.apiurl}/LoadPaises`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
+    loadsolicitudes = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/LoadSolicitudes`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
+    loadefectores = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/LoadEfectores`,
             headers: { 'content-type': 'application/json' }
         });
     };
@@ -367,6 +454,25 @@ class ServiceConexion {
     };
     
         
+    listasolicitudes = (rol) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaSolicitudes`,
+            headers: { 'content-type': 'application/json' },
+            data: { rol }
+        });
+    };
+    
+        
+    listaremitosbeneficiarios = () => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/ListaRemitosBeneficiarios`,
+            headers: { 'content-type': 'application/json' }
+        });
+    };
+    
+        
     deletearticulos = (data) => {
         return axios({
             method: 'post',
@@ -447,6 +553,26 @@ class ServiceConexion {
     };
 
         
+    deletesolicitud = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeleteSolicitud`,
+            headers: { 'content-type': 'application/json' },
+            data: { data }
+        });
+    };
+
+        
+    deleteremitosbeneficiarios = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/DeleteRemitoBeneficiario`,
+            headers: { 'content-type': 'application/json' },
+            data: { data }
+        });
+    };
+
+        
     uploadfileserver = (id, name, file) => {
         return axios({
             method: 'post',
@@ -497,14 +623,14 @@ class ServiceConexion {
     };
 
     
-    savebeneficiario = (beneficiario) => {
+    /*savebeneficiario = (beneficiario) => {
         return axios({
             method: 'post',
             url: `${this.apiurl}/SaveBeneficiario`,
             headers: { 'content-type': 'application/json' },
             data: { ...beneficiario }
         });
-    };
+    };*/
 
     
     savearticulo = (articulo) => {
@@ -557,12 +683,82 @@ class ServiceConexion {
     };
 
     
+    savesituacioneconomica = (sit) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSituacionEconomica`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...sit }
+        });
+    };
+
+    
     savesituacionhabitacional = (sit) => {
         return axios({
             method: 'post',
             url: `${this.apiurl}/SaveSituacionHabitacional`,
             headers: { 'content-type': 'application/json' },
             data: { ...sit }
+        });
+    };
+
+    
+    savesituacionsalud = (sit) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSituacionSalud`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...sit }
+        });
+    };
+
+    
+    savesituacioneducacion = (sit) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSituacionEducacion`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...sit }
+        });
+    };
+
+    
+    savesituacionjudicial = (sit) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSituacionJudicial`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...sit }
+        });
+    };
+
+    
+    saveobservacionbenef = (obs, id) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveObservacionBenef`,
+            headers: { 'content-type': 'application/json' },
+            data: { obs, id }
+        });
+    };
+
+    
+    savesolicitudbenef = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveSolicitudBenef`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...data }
+        });
+    };
+
+    
+    saveremitobenef = (data) => {
+        return axios({
+            method: 'post',
+            url: `${this.apiurl}/SaveRemitoBenef`,
+            headers: { 'content-type': 'application/json' },
+            data: { ...data }
         });
     };
 }

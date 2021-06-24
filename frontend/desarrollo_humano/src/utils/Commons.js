@@ -15,6 +15,11 @@ export const getUserId = () => {
     return sessionStorage.getItem('userid') || null;
 }
 
+// return the rol from the session storage
+export const getRolId = () => {
+    return sessionStorage.getItem('rol') || null;
+}
+
 // remove the token and user from the session storage
 export const removeUserSession = () => {
     sessionStorage.removeItem('token');
@@ -22,9 +27,10 @@ export const removeUserSession = () => {
 }
 
 // set the token and user from the session storage
-export const setUserSession = (token, user, userid, pages) => {
+export const setUserSession = (token, user, userid, rol, pages) => {
     sessionStorage.setItem('token', token);
     sessionStorage.setItem('userid', userid);
+    sessionStorage.setItem('rol', rol);
     sessionStorage.setItem('user', JSON.stringify(user));
     sessionStorage.setItem('pages', JSON.stringify(pages));
 }

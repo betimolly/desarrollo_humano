@@ -1,0 +1,33 @@
+>>>>>>>>>>>>>>> ERROR <<<<<<<<<<<<<<<
+ Fecha: 22-09-2020 21:01
+Error:PDOException: SQLSTATE[HY000]: General error: 2031  in D:\Work\DesarrolloHumano\app\backend\backend.php:1022
+Stack trace:
+#0 D:\Work\DesarrolloHumano\app\backend\backend.php(1022): PDOStatement->execute(NULL)
+#1 D:\Work\DesarrolloHumano\app\backend\backend.php(47): Backend->DeleteSolicitud()
+#2 D:\Work\DesarrolloHumano\app\backend\backend.php(1819): Backend->ProcessRequest()
+#3 {main}
+ >>>>>>>>>>>>>>>FIN ERROR<<<<<<<<<<<<<<< 
+ 
+ 
+>>>>>>>>>>>>>>> ERROR <<<<<<<<<<<<<<<
+ Fecha: 22-09-2020 21:36
+Error:PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 1 in D:\Work\DesarrolloHumano\app\backend\backend.php:1021
+Stack trace:
+#0 D:\Work\DesarrolloHumano\app\backend\backend.php(1021): PDO->prepare('UPDATE acc_soli...')
+#1 D:\Work\DesarrolloHumano\app\backend\backend.php(47): Backend->DeleteSolicitud()
+#2 D:\Work\DesarrolloHumano\app\backend\backend.php(1820): Backend->ProcessRequest()
+#3 {main}
+ >>>>>>>>>>>>>>>FIN ERROR<<<<<<<<<<<<<<< 
+ 
+ 
+>>>>>>>>>>>>>>> ERROR <<<<<<<<<<<<<<<
+ Fecha: 22-09-2020 21:36
+Error:PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 1 in D:\Work\DesarrolloHumano\app\backend\backend.php:1021
+Stack trace:
+#0 D:\Work\DesarrolloHumano\app\backend\backend.php(1021): PDO->prepare('UPDATE acc_soli...')
+#1 D:\Work\DesarrolloHumano\app\backend\backend.php(47): Backend->DeleteSolicitud()
+#2 D:\Work\DesarrolloHumano\app\backend\backend.php(1820): Backend->ProcessRequest()
+#3 {main}
+ >>>>>>>>>>>>>>>FIN ERROR<<<<<<<<<<<<<<< 
+ 
+ 

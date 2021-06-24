@@ -1,10 +1,11 @@
 import React from "react";
 import MaterialTable from 'material-table';
+import { getRolId } from '../utils/Commons';
 import ModalConfirmacion from "../componentes/ModalConfirmacion";
 import conn from '../ServiceConexion';
 
 
-class ListaBeneficiarios extends React.Component {
+class ListaSolicitudes extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -21,13 +22,13 @@ class ListaBeneficiarios extends React.Component {
     
     handleDelete = async () => {
         const ids = this.state.borrar.map((v,i)=>v.id);
-        await conn.deletebeneficiarios(ids);
+        await conn.deletesolicitud(ids);
         this.loadData();
         this.handleClose();
     }
 
     loadData = async () => {
-        let result = await conn.listabeneficiarios();
+        let result = await conn.listasolicitudes(getRolId());
         this.setState( { data: result.data } );
     };
 
@@ -39,8 +40,8 @@ class ListaBeneficiarios extends React.Component {
 
         return (
             <div>
-                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} handleOk={this.handleDelete} dialog_title="Eliminar registros" dialog_content="¿Seguro que desea eliminar los registros seleccionados?" />
-                <h2 className="labelleft">Listado de Beneficiarios</h2>
+                <ModalConfirmacion open={this.state.open} handleClose={this.handleClose} handleOk={this.handleDelete} dialog_title="Modificar registros" dialog_content="¿Seguro que desea borrar los registros seleccionados?" />
+                <h2 className="labelleft">Listado de Solicitudes de Entrega de Mercadería</h2>
                 <MaterialTable
                     className="table table-striped"
                     localization={{
@@ -52,8 +53,8 @@ class ListaBeneficiarios extends React.Component {
                             nRowsSelected: '{0} filas(s) seleccionada/s',
                             searchPlaceholder: 'Buscar',
                             searchTooltip: 'Buscar',
-                            exportTitle: 'Exportar Beneficiarios',
-                            exportName: 'Exportar listado de Beneficiarios'
+                            exportTitle: 'Exportar Solicitudes',
+                            exportName: 'Exportar listado de Solicitudes'
                         },
                         header: {
                             actions: 'Acciones'
@@ -67,34 +68,37 @@ class ListaBeneficiarios extends React.Component {
                     }}
                     title=""
                     columns={ [
-                        { title: 'Tipo', field: 'tipo' },
-                        { title: 'DNI / CUIT', field: 'numero' },
-                        { title: 'Nombre', field: 'nombre' },
-                        { title: 'Fecha Alta', field: 'fecha_alta' },
-                        { title: 'Activo', field: 'activo' },
-                        { title: 'Observaciones', field: 'observaciones' }
+                        { title: 'Tipo', field: 'es_pers_inst' },
+                        { title: 'DNI / CUIT', field: 'documento' },
+                        { title: 'Nombre', field: 'descripcion' },
+                        { title: 'Fecha Emisión', field: 'fecha_emision' },
+                        { title: 'Tipo Beneficio', field: 'tipo_beneficio' },
+                        { title: 'Efector', field: 'nombre' },
+                        { title: 'Nro. Remito', field: 'id_remito' },
+                        { title: 'Estado', field: 'estado' },
+                        { title: 'Borrado', field: 'borrado' }
                     ] }
                     data={ this.state.data }        
                     actions={[
                         {
                             icon: 'add',
-                            tooltip: 'Agregar Beneficiario',
+                            tooltip: 'Agregar Solicitud',
                             isFreeAction: true,
                             onClick: (event) => {if (this.props.history) {
-                                this.props.history.push('/desarrollo_humano/agregar_beneficiario');
+                                this.props.history.push('/desarrollo_humano/solicitud_entrega');
                             }}
                         },
                         {
                             icon: 'edit',
                             tooltip: 'Editar Beneficiario',
                             onClick: (event, rowData) => {if (rowData.length === 1) {
-                                this.props.history.push(`/desarrollo_humano/agregar_beneficiario/${rowData[0].tipo}/${rowData[0].id}`);
+                                this.props.history.push(`/desarrollo_humano/solicitud_entrega/${rowData[0].id}`);
                             } else {
 
                             }}
                         },
                         {
-                            tooltip: 'Borrar todos los beneficiarios seleccionados',
+                            tooltip: 'Activar/Desactivar todas las solicitudes seleccionados',
                             icon: 'delete',
                             onClick: (evt, data) => {
                                 this.setState({ borrar: data, open: true });
@@ -114,38 +118,6 @@ class ListaBeneficiarios extends React.Component {
                             }
                         }
                     }}
-                    detailPanel={
-                        rowData => {
-                                return (
-                                  <div
-                                    style={{
-                                      textAlign: 'center',
-                                      color: 'black',
-                                      backgroundColor: '#fff',
-                                    }}
-                                  > 
-                                  {rowData.familiares.length > 0 ? (
-                                        <table className="gridFamiliares">
-                                            <tr>
-                                                <th>Nombre Familiar</th>
-                                                <th>Parentesco</th>
-                                            </tr>
-                                        { 
-                                            rowData.familiares.map(f => <tr><td>{f.familiar}</td><td>{f.parentesco}</td></tr>)
-                                        } 
-                                        </table>
-                                  )
-                                  :
-                                  <table className="gridFamiliares">
-                                    <tr>
-                                        <th>No tiene familiares agregados</th>
-                                    </tr>    
-                                  </table>      
-                                    }
-                                  </div>
-                                )
-                            }
-                    }
                 />
 
             </div>
@@ -153,4 +125,4 @@ class ListaBeneficiarios extends React.Component {
     }
 }      
 
-export default ListaBeneficiarios;
+export default ListaSolicitudes;

@@ -74,6 +74,7 @@ class SituacionHabitacional extends React.Component {
                     </Grid>
                     <Grid item sm={3} xs={12}>
                         <TextField id="ddlTipoVivienda" fullWidth select name="tipo_vivienda" className="labelleft" label="Tipo Vivienda" value={situacion_hab.tipo_vivienda} onChange={this.handleChange} >
+                            <MenuItem value="Casa">Casa</MenuItem> 
                             <MenuItem value="Rancho">Rancho</MenuItem> 
                             <MenuItem value="Casilla">Casilla</MenuItem>
                             <MenuItem value="Departamento">Departamento</MenuItem>
@@ -82,6 +83,7 @@ class SituacionHabitacional extends React.Component {
                             <MenuItem value="Pieza en pensión">Pieza en pensión</MenuItem>
                             <MenuItem value="Local no construido para vivienda">Local no construido para vivienda</MenuItem>
                             <MenuItem value="Vivienda móvil">Vivienda móvil</MenuItem>
+                            <MenuItem value="Otro">Otro</MenuItem>
                         </TextField>
                     </Grid>
                     <Grid item sm={3} xs={12}>
@@ -90,6 +92,7 @@ class SituacionHabitacional extends React.Component {
                             <MenuItem value="Alquilada">Alquilada</MenuItem>
                             <MenuItem value="Prestada">Prestada</MenuItem>
                             <MenuItem value="Usurpada">Usurpada</MenuItem>
+                            <MenuItem value="Otro">Otro</MenuItem>
                         </TextField>
                     </Grid>
                     <Grid item sm={3} xs={12}>
