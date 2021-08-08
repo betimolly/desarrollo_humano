@@ -18,7 +18,6 @@ class Backend {
             PDO::ATTR_EMULATE_PREPARES => false
         );
         try {
-            //$this->conexion = new PDO( "mysql:dbname=db_muni_cipo;host=192.168.1.177;charset=utf8", "desar", "4h3#gh3Lmj3", $options );
             $this->conexion = new PDO( "mysql:dbname=db_muni_cipo;host=localhost;charset=utf8", "root", "admin", $options );
 
         }catch(PDOException $e){
